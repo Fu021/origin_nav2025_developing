@@ -33,11 +33,9 @@ namespace lidar_transform
         std::string imu_topic_pub;
         std::string lidar_pointcloud_topic_pub;
 
-        message_filters::Subscriber<livox_ros_driver2::msg::CustomMsg> lidar_custom_sub;
-        message_filters::Subscriber<sensor_msgs::msg::Imu> imu_sub;
-        message_filters::Subscriber<sensor_msgs::msg::PointCloud2> lidar_pointcloud_sub;
-        using SyncPolicy = message_filters::sync_policies::ApproximateTime<livox_ros_driver2::msg::CustomMsg,sensor_msgs::msg::Imu,sensor_msgs::msg::PointCloud2>;
-        std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync;
+        rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr lidar_custom_sub;
+        rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
+        rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr lidar_pointcloud_sub;
 
         rclcpp::Publisher<livox_ros_driver2::msg::CustomMsg>::SharedPtr lidar_custom_pub;
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub;
@@ -46,10 +44,14 @@ namespace lidar_transform
         std::shared_ptr<tf2_ros::Buffer> buffer;
         std::shared_ptr<tf2_ros::TransformListener> listener;
 
-        void lidar_and_imu_callback(
-            const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr& msg1, 
-            const sensor_msgs::msg::Imu::ConstSharedPtr& msg2,
-            const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg3
+        void lidar_custom_callback(
+            const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr& msg
+        );
+        void lidar_pointcloud_callback(
+            const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg
+        );
+        void imu_callback(
+            const sensor_msgs::msg::Imu::ConstSharedPtr& msg
         );
         Eigen::Matrix3d toEigenMatrix(const std::array<double, 9>& covariance);
         std::array<double, 9> toCovarianceArray(const Eigen::Matrix3d& matrix);
