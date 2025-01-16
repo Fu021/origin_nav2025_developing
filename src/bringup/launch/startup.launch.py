@@ -97,7 +97,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            #pointlio,
+            pointlio,
             container,
             tf,
             lidar_transform,
