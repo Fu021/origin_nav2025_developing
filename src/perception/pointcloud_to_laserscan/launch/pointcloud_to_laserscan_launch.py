@@ -15,7 +15,7 @@ def generate_launch_description():
             remappings=[('cloud_in',  ['/segmentation/obstacle']),
                         ('scan',  ['/scan'])],
             parameters=[{
-                'target_frame': 'livox_frame',
+                'target_frame': 'base_link',
                 'transform_tolerance': 0.01,
                 'min_height': -0.25,
                 'max_height': 0.3,

@@ -26,7 +26,6 @@ from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 from nav2_common.launch import RewrittenYaml
 
-
 def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('bringup')
@@ -96,7 +95,6 @@ def generate_launch_description():
             launch_arguments={'namespace': namespace,
                               'use_sim_time': use_sim_time,
                               'autostart': autostart,
-                              'params_file': params_file,
                               'use_composition': use_composition,
                               'use_respawn': use_respawn,
                               'container_name': 'container'}.items())  

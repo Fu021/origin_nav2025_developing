@@ -17,7 +17,7 @@ def generate_launch_description():
                 parameters=[{
                     'translation.x':0.0,
                     'translation.y':0.2,
-                    'translation.z':0.0,
+                    'translation.z':0.4,
                     'rotation.x':0.707,
                     'rotation.y':0.707,
                     'rotation.z':0.0,

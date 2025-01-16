@@ -117,6 +117,7 @@ namespace lidar_transform
         }
 
         tf2::doTransform(*msg,msg_pub,lidar_to_base_link);
+        msg_pub.header.stamp = msg->header.stamp;
         msg_pub.header.frame_id = base_link_frame;
 
         lidar_pointcloud_pub->publish(msg_pub);

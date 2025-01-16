@@ -9,13 +9,15 @@ import os
 
 def generate_launch_description():
     bringup_dir = get_package_share_directory('bringup')
+    params_file = os.path.join(bringup_dir, 'params', 'nav2_params.yaml')
 
     container = ComposableNodeContainer(
         name='container',
         namespace='',
         package='rclcpp_components',
         executable='component_container',
-        output='screen'
+        output='screen',
+        parameters=[params_file, {'autostart': True}],
     )
     
     tf = IncludeLaunchDescription(
@@ -95,6 +97,33 @@ def generate_launch_description():
         )
     )
 
+    p_to_l = LoadComposableNodes(
+        target_container='container',
+        composable_node_descriptions=[
+            ComposableNode(
+                package='pointcloud_to_laserscan',
+                plugin="pointcloud_to_laserscan::PointCloudToLaserScanNode",
+                name='pointcloud_to_laserscan_node',
+                parameters=[{
+                    'target_frame': 'base_link',
+                    'transform_tolerance': 0.1,
+                    'min_height': 0.2,
+                    'max_height': 1.0,
+                    'angle_min': -3.14159,  # -M_PI/2
+                    'angle_max': 3.14159,  # M_PI/2
+                    'angle_increment': 0.0043,  # M_PI/360.0
+                    'scan_time': 0.3333,
+                    'range_min': 0.4,
+                    'range_max': 15.0,
+                    'use_inf': True,
+                    'inf_epsilon': 1.0
+                }],
+                remappings=[('cloud_in',  ['/segmentation/obstacle']),
+                        ('scan',  ['/scan'])],
+            )
+        ]
+    )
+
     return LaunchDescription(
         [
             pointlio,
@@ -107,5 +136,6 @@ def generate_launch_description():
             seg,
             load_map_server,
             #nav2,
+            p_to_l,
         ]
     )
