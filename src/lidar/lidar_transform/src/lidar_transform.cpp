@@ -3,6 +3,7 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
 #include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 
 namespace lidar_transform
 {
@@ -11,26 +12,31 @@ namespace lidar_transform
     {
         this->declare_parameter<std::string>("lidar_custom_topic","/livox/lidar");
         this->declare_parameter<std::string>("imu_topic","/livox/imu");
+        this->declare_parameter<std::string>("lidar_pointcloud_topic","/livox/lidar/pointcloud");
         this->declare_parameter<std::string>("lidar_frame","mid360");
         this->declare_parameter<std::string>("base_link_frame","base_link");
         this->declare_parameter<std::string>("lidar_custom_topic_pub","/base_link/lidar");
         this->declare_parameter<std::string>("imu_topic_pub","/base_link/imu");
+        this->declare_parameter<std::string>("lidar_pointcloud_topic_pub","/base_link/lidar/pointcloud");
 
         this->get_parameter("lidar_custom_topic",lidar_custom_topic);
         this->get_parameter("imu_topic",imu_topic);
+        this->get_parameter("lidar_pointcloud_topic",lidar_pointcloud_topic);
         this->get_parameter("lidar_frame",lidar_frame);
         this->get_parameter("base_link_frame",base_link_frame);
         this->get_parameter("lidar_custom_topic_pub",lidar_custom_topic_pub);
         this->get_parameter("imu_topic_pub",imu_topic_pub);
+        this->get_parameter("lidar_pointcloud_topic_pub",lidar_pointcloud_topic_pub);
 
         lidar_custom_sub.subscribe(this, lidar_custom_topic);
         imu_sub.subscribe(this, imu_topic);
+        lidar_pointcloud_sub.subscribe(this,lidar_pointcloud_topic);
 
         sync = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
-            SyncPolicy(100),lidar_custom_sub,imu_sub
+            SyncPolicy(100),lidar_custom_sub,imu_sub,lidar_pointcloud_sub
         );
         sync->registerCallback(
-            std::bind(&LidarTransform::lidar_and_imu_callback,this,std::placeholders::_1,std::placeholders::_2)
+            std::bind(&LidarTransform::lidar_and_imu_callback,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3)
         );
 
         lidar_custom_pub = this->create_publisher<livox_ros_driver2::msg::CustomMsg>(
@@ -39,6 +45,9 @@ namespace lidar_transform
         imu_pub = this->create_publisher<sensor_msgs::msg::Imu>(
             imu_topic_pub,10
         );
+        lidar_pointcloud_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+            lidar_pointcloud_topic_pub,10
+        );
 
         buffer = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
@@ -46,12 +55,14 @@ namespace lidar_transform
 
     void LidarTransform::lidar_and_imu_callback(
         const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr& msg1, 
-        const sensor_msgs::msg::Imu::ConstSharedPtr& msg2
+        const sensor_msgs::msg::Imu::ConstSharedPtr& msg2,
+        const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg3
     )
     {
         geometry_msgs::msg::TransformStamped lidar_to_base_link;
         livox_ros_driver2::msg::CustomMsg msg1_pub;
         sensor_msgs::msg::Imu msg2_pub;
+        sensor_msgs::msg::PointCloud2 msg3_pub;
 
         try
         {
@@ -85,6 +96,9 @@ namespace lidar_transform
 
             msg1_pub.points.push_back(new_point);
         }
+
+        tf2::doTransform(*msg3,msg3_pub,lidar_to_base_link);
+        msg3_pub.header.frame_id = base_link_frame;
         
         // 转换imu
         msg2_pub.header.stamp = msg1->header.stamp;
@@ -138,6 +152,7 @@ namespace lidar_transform
 
         lidar_custom_pub->publish(msg1_pub);
         imu_pub->publish(msg2_pub);
+        lidar_pointcloud_pub->publish(msg3_pub);
     }
 
     Eigen::Matrix3d LidarTransform::toEigenMatrix(const std::array<double, 9>& covariance)

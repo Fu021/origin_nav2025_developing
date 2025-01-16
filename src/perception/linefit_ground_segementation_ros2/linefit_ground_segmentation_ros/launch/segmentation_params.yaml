@@ -23,6 +23,6 @@ ground_segmentation:
     latch: false                # latch output topics or not
     visualize: false            # visualize segmentation result - USE ONLY FOR DEBUGGING
 
-    input_topic: "cloud_registered"
+    input_topic: "/base_link/lidar/pointcloud"
     obstacle_output_topic: "segmentation/obstacle"
     ground_output_topic: "segmentation/ground"
