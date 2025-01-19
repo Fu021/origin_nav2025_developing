@@ -5,16 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
-        - /LaserScan1
-        - /Global Planner1
-        - /Controller1
-        - /PointCloud21/Topic1
-        - /PointCloud22/Topic1
       Splitter Ratio: 0.5833333134651184
-    Tree Height: 1526
+    Tree Height: 601
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -59,13 +53,49 @@ Visualization Manager:
         All Enabled: false
         aft_mapped:
           Value: false
+        armor_0:
+          Value: false
+        armor_1:
+          Value: false
+        armor_2:
+          Value: false
+        armor_3:
+          Value: false
+        armor_support_frame_0:
+          Value: false
+        armor_support_frame_1:
+          Value: false
+        armor_support_frame_2:
+          Value: false
+        armor_support_frame_3:
+          Value: false
         base_link:
           Value: true
-        livox_frame:
+        front_industrial_camera:
           Value: false
+        front_industrial_camera_optical_frame:
+          Value: false
+        front_left_wheel:
+          Value: true
+        front_right_wheel:
+          Value: true
+        gimbal_pitch:
+          Value: false
+        gimbal_yaw:
+          Value: true
+        light_indicator:
+          Value: false
+        livox_frame:
+          Value: true
         map:
           Value: false
         odom:
+          Value: false
+        rear_left_wheel:
+          Value: true
+        rear_right_wheel:
+          Value: true
+        speed_monitor:
           Value: false
       Marker Scale: 2
       Name: TF
@@ -77,7 +107,36 @@ Visualization Manager:
           odom:
             aft_mapped:
               base_link:
+                armor_support_frame_0:
+                  armor_0:
+                    {}
+                armor_support_frame_1:
+                  armor_1:
+                    {}
+                armor_support_frame_2:
+                  armor_2:
+                    {}
+                armor_support_frame_3:
+                  armor_3:
+                    {}
+                front_left_wheel:
+                  {}
+                front_right_wheel:
+                  {}
+                gimbal_yaw:
+                  gimbal_pitch:
+                    front_industrial_camera:
+                      front_industrial_camera_optical_frame:
+                        {}
+                    speed_monitor:
+                      {}
+                light_indicator:
+                  {}
                 livox_frame:
+                  {}
+                rear_left_wheel:
+                  {}
+                rear_right_wheel:
                   {}
       Update Interval: 0
       Value: true
@@ -114,7 +173,7 @@ Visualization Manager:
       Color: 246; 97; 81
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 0
@@ -135,7 +194,7 @@ Visualization Manager:
         Value: /scan
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz_common/Group
       Displays:
         - Alpha: 0.30000001192092896
@@ -427,7 +486,7 @@ Visualization Manager:
       Color: 119; 118; 123
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -448,12 +507,12 @@ Visualization Manager:
         Value: /segmentation/ground
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 1.3607286214828491
-        Min Value: -0.8274773955345154
+        Max Value: 18.520549774169922
+        Min Value: -0.041877321898937225
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -461,7 +520,7 @@ Visualization Manager:
       Color: 237; 51; 59
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -482,7 +541,7 @@ Visualization Manager:
         Value: /segmentation/obstacle
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/Axes
       Enabled: false
       Length: 1
@@ -503,6 +562,40 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /armor_detector/result_img
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 3.8301193714141846
+        Min Value: 0.019276410341262817
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: AxisColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /base_link/lidar/pointcloud
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: false
   Enabled: true
   Global Options:
@@ -542,37 +635,37 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 11.8814697265625
+      Distance: 28.26897430419922
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.6315426230430603
-        Y: -0.1587749868631363
-        Z: 2.560612440109253
+        X: 5.062645435333252
+        Y: -1.953703761100769
+        Z: 2.0360183715820312
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.26979660987854
+      Pitch: 1.0197969675064087
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 4.679684638977051
+      Yaw: 2.9596433639526367
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1792
+  Height: 752
   Hide Left Dock: false
   Hide Right Dock: false
   Image:
     collapsed: false
   Navigation 2:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000027a00000664fc020000000cfb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e000006640000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000018004e0061007600690067006100740069006f006e00200032000000030a000003c80000023a00fffffffb0000001e005200650061006c00730065006e0073006500430061006d00650072006100000002c6000000c10000000000000000fb000000220053006c0061006d0054006f006f006c0062006f00780050006c007500670069006e000000024b00000185000002e500fffffffb0000000a0049006d006100670065020000000900000000000004f700000320000000010000010f0000039efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d0000039e0000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d006501000000000000045000000000000000000000082e0000066400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000027a00000296fc020000000cfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000296000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000018004e0061007600690067006100740069006f006e00200032000000030a000003c80000013900fffffffb0000001e005200650061006c00730065006e0073006500430061006d00650072006100000002c6000000c10000000000000000fb000000220053006c0061006d0054006f006f006c0062006f00780050006c007500670069006e000000024b000001850000018500fffffffb0000000a0049006d006100670065020000000900000000000004f700000320000000010000010f0000039efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d0000039e000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000002eb0000029600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   SlamToolboxPlugin:
@@ -581,6 +674,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 2740
-  X: 140
-  Y: 54
+  Width: 1387
+  X: 522
+  Y: 123
