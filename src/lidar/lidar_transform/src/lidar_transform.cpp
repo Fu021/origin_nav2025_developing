@@ -63,7 +63,7 @@ namespace lidar_transform
 
     void LidarTransform::listen_transfrom_callback()
     {
-        //geometry_msgs::msg::TransformStamped lidar_to_base_link;
+        geometry_msgs::msg::TransformStamped lidar_to_base_link;
         try
         {
             lidar_to_base_link = buffer->lookupTransform(base_link_frame,lidar_frame,rclcpp::Time(0));

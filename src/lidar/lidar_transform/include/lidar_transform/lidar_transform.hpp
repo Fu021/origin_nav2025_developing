@@ -46,8 +46,6 @@ namespace lidar_transform
         Eigen::Affine3f lidar_to_base_link_eigen_3f;
         Eigen::Affine3d lidar_to_base_link_eigen_3d;
 
-        geometry_msgs::msg::TransformStamped lidar_to_base_link;
-
         std::shared_ptr<tf2_ros::Buffer> buffer;
         std::shared_ptr<tf2_ros::TransformListener> listener;
 
