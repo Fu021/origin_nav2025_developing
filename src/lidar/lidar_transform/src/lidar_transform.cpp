@@ -5,6 +5,8 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 
+#include <ctime>
+
 namespace lidar_transform
 {
     LidarTransform::LidarTransform(const rclcpp::NodeOptions& options)
@@ -51,17 +53,17 @@ namespace lidar_transform
             lidar_pointcloud_topic_pub,10
         );
 
+        listen_transform_timer = this->create_wall_timer(
+            std::chrono::milliseconds(1000),std::bind(&LidarTransform::listen_transfrom_callback,this)
+        );
+
         buffer = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
     }
 
-    void LidarTransform::lidar_custom_callback(
-        const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr& msg
-    )
+    void LidarTransform::listen_transfrom_callback()
     {
-        geometry_msgs::msg::TransformStamped lidar_to_base_link;
-        livox_ros_driver2::msg::CustomMsg msg_pub;
-        
+        //geometry_msgs::msg::TransformStamped lidar_to_base_link;
         try
         {
             lidar_to_base_link = buffer->lookupTransform(base_link_frame,lidar_frame,rclcpp::Time(0));
@@ -72,8 +74,15 @@ namespace lidar_transform
                 lidar_frame.c_str(),base_link_frame.c_str(),e.what());
             return;
         }
+        lidar_to_base_link_eigen_3d = tf2::transformToEigen(lidar_to_base_link);
+        lidar_to_base_link_eigen_3f = lidar_to_base_link_eigen_3d.cast<float>();
+    }
 
-        Eigen::Affine3d lidar_to_base_link_eigen = tf2::transformToEigen(lidar_to_base_link);
+    void LidarTransform::lidar_custom_callback(
+        const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr& msg
+    )
+    {
+        livox_ros_driver2::msg::CustomMsg msg_pub;
         
         // 转换点云
         msg_pub.header = msg->header;
@@ -84,8 +93,8 @@ namespace lidar_transform
         msg_pub.rsvd = msg->rsvd;
         for (size_t i = 0; i < msg->points.size(); ++i)
         {
-            Eigen::Vector3d point(msg->points[i].x,msg->points[i].y,msg->points[i].z);
-            point = lidar_to_base_link_eigen * point;
+            Eigen::Vector3f point(msg->points[i].x,msg->points[i].y,msg->points[i].z);
+            point = lidar_to_base_link_eigen_3f * point;
 
             livox_ros_driver2::msg::CustomPoint new_point = msg->points[i];
             new_point.x = point.x();
@@ -102,49 +111,46 @@ namespace lidar_transform
         const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg
     )
     {
-        geometry_msgs::msg::TransformStamped lidar_to_base_link;
         sensor_msgs::msg::PointCloud2 msg_pub;
 
-        try
-        {
-            lidar_to_base_link = buffer->lookupTransform(base_link_frame,lidar_frame,rclcpp::Time(0));
-        }
-        catch(const std::exception& e)
-        {
-            RCLCPP_WARN(this->get_logger(),"Could't lookup transform from %s to %s: %s",
-                lidar_frame.c_str(),base_link_frame.c_str(),e.what());
-            return;
-        }
-
-        tf2::doTransform(*msg,msg_pub,lidar_to_base_link);
+        pointcloud_transform(*msg,msg_pub);
         msg_pub.header.stamp = msg->header.stamp;
         msg_pub.header.frame_id = base_link_frame;
 
         lidar_pointcloud_pub->publish(msg_pub);
     }
 
+    void LidarTransform::pointcloud_transform(
+        const sensor_msgs::msg::PointCloud2 & p_in, sensor_msgs::msg::PointCloud2 & p_out
+    )
+    {
+        p_out = p_in;
+
+        sensor_msgs::PointCloud2ConstIterator<float> x_in(p_in, std::string("x"));
+        sensor_msgs::PointCloud2ConstIterator<float> y_in(p_in, std::string("y"));
+        sensor_msgs::PointCloud2ConstIterator<float> z_in(p_in, std::string("z"));
+
+        sensor_msgs::PointCloud2Iterator<float> x_out(p_out, std::string("x"));
+        sensor_msgs::PointCloud2Iterator<float> y_out(p_out, std::string("y"));
+        sensor_msgs::PointCloud2Iterator<float> z_out(p_out, std::string("z"));
+
+        Eigen::Vector3f point;
+        for (; x_in != x_in.end(); ++x_in, ++y_in, ++z_in, ++x_out, ++y_out, ++z_out) {
+            point = lidar_to_base_link_eigen_3f * Eigen::Vector3f(*x_in, *y_in, *z_in);
+            *x_out = point.x();
+            *y_out = point.y();
+            *z_out = point.z();
+        }
+    }
+
     void LidarTransform::imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr& msg)
     {
-        geometry_msgs::msg::TransformStamped lidar_to_base_link;
         sensor_msgs::msg::Imu msg_pub;
-
-        try
-        {
-            lidar_to_base_link = buffer->lookupTransform(base_link_frame,lidar_frame,rclcpp::Time(0));
-        }
-        catch(const std::exception& e)
-        {
-            RCLCPP_WARN(this->get_logger(),"Could't lookup transform from %s to %s: %s",
-                lidar_frame.c_str(),base_link_frame.c_str(),e.what());
-            return;
-        }
-
-        Eigen::Affine3d lidar_to_base_link_eigen = tf2::transformToEigen(lidar_to_base_link);
         
         msg_pub.header.stamp = msg->header.stamp;
         msg_pub.header.frame_id = base_link_frame;
 
-        Eigen::Matrix3d rotation = lidar_to_base_link_eigen.rotation();
+        Eigen::Matrix3d rotation = lidar_to_base_link_eigen_3d.rotation();
         //
         Eigen::Vector3d linear_acceleration(
             msg->linear_acceleration.x,

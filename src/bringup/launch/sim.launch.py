@@ -126,12 +126,12 @@ def generate_launch_description():
         [
             container,
             lidar_transform,
-            start_nav2_rviz,
-            seg,
-            load_map_server,
-            nav2,
-            p_to_l,
-            map_to_odom,
-            pointlio
+            #start_nav2_rviz,
+            #seg,
+            #load_map_server,
+            #nav2,
+            #p_to_l,
+            #map_to_odom,
+            #pointlio
         ]
     )
