@@ -37,18 +37,18 @@ def create_get_data(node,qos_profile,nav):
     )
     save_Referee.setup(node=node)
 
-    # save_auto_aim = py_trees_ros.subscribers.ToBlackboard(
-    #     name="save_auto_aim",
-    #     topic_name="/tracker/target",
-    #     topic_type=Target,
-    #     blackboard_variables="auto_aim",
-    #     initialise_variables=Target(),
-    #     qos_profile=rclpy.qos.qos_profile_sensor_data
-    # )
-    # save_auto_aim.setup(node=node)
+    save_auto_aim = py_trees_ros.subscribers.ToBlackboard(
+        name="save_auto_aim",
+        topic_name="/armor_solver/target",
+        topic_type=Target,
+        blackboard_variables="auto_aim",
+        initialise_variables=Target(),
+        qos_profile=rclpy.qos.qos_profile_sensor_data
+    )
+    save_auto_aim.setup(node=node)
 
     get_data.add_children(
-        [get_data_from_yaml,save_Referee,check_nav_state]
+        [get_data_from_yaml,save_Referee,check_nav_state,save_auto_aim]
     )
 
     return get_data
@@ -67,15 +67,6 @@ def create_send_data(node,qos_profile):
         blackboard_variable="running"
     )
     send_running_state.setup(node=node)
-
-    # send_priority = py_trees_ros.publishers.FromBlackboard(
-    #     name="send_priority",
-    #     topic_name="priority",
-    #     topic_type=Bool,
-    #     qos_profile=qos_profile,
-    #     blackboard_variable="priority"
-    # )
-    # send_priority.setup(node=node)
 
     send_rot = py_trees_ros.publishers.FromBlackboard(
         name="send_rot",
