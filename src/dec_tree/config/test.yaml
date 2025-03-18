@@ -1,0 +1,12 @@
+test:
+  # - x: 0.17255079746246338
+  #   y: 5.938925743103027
+
+  - x: 0.0
+    y: 0.0
+    
+FollowPath: FollowPath
+
+our_outpost: 0.0
+our_color: red
+their_outpost: 0.0
