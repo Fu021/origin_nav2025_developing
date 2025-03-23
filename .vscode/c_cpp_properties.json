@@ -9,7 +9,9 @@
                 "${workspaceFolder}/src/localization/icp_registration/include",
                 "${workspaceFolder}/install/livox_ros_driver2/include/**",
                 "/usr/include/eigen3/**",
-                "/usr/include/pcl-1.12"
+                "/usr/include/pcl-1.12",
+                "${workspaceFolder}/src/serial/rm_serial_cpp/include",
+                "${workspaceFolder}/install/referee_msg/include/referee_msg"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -6,7 +6,7 @@ from py_trees.common import Status
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import PoseStamped
 import time
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool,Int32,Float32
 import random
 
 class GetDataFromYaml(py_trees.behaviour.Behaviour):
@@ -55,10 +55,8 @@ class PubGoal(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("goal",py_trees.common.Access.READ)
         self.blackboard.register_key("running",py_trees.common.Access.WRITE)
         self.blackboard.register_key("running",py_trees.common.Access.READ)
-        self.blackboard.register_key("controller",py_trees.common.Access.READ)
         self.nav = nav
         self.bt_path = get_package_share_directory("dec_tree") + "/bt/"
-        self.wait_time = 0
 
     def update(self):
         if self.blackboard.Referee.game_progress != 4:
@@ -74,13 +72,9 @@ class PubGoal(py_trees.behaviour.Behaviour):
         goal_msg.pose.position.x = float(self.blackboard.goal['x'])
         goal_msg.pose.position.y = float(self.blackboard.goal['y'])
 
-        if time.time() < self.wait_time:
-            return Status.FAILURE
-
         if self.nav.goToPose(goal_msg):
             self.blackboard.running = Bool()
             self.blackboard.running.data = True
-            self.wait_time = time.time() + 0.5
 
         return Status.SUCCESS
     
@@ -93,13 +87,13 @@ class Patrol(py_trees.behaviour.Behaviour):
         referee_condition额外附加裁判条件 为1后将条件通过字典传入\n
         interrupt为1可以打断running状态强制发送点位
     '''
-    def __init__(self, name: str, points_name, node:Node, nav: BasicNavigator, controller, referee_condition=0):
+    def __init__(self, name: str, points_name, node:Node, nav: BasicNavigator, referee_condition=0):
         super().__init__(name)
         self.yaml = self.attach_blackboard_client(namespace="yaml")
         self.yaml.register_key(points_name,py_trees.common.Access.READ)
-        self.yaml.register_key("our_outpost",py_trees.common.Access.READ)
-        self.yaml.register_key("our_color",py_trees.common.Access.READ)
-        self.yaml.register_key("their_outpost",py_trees.common.Access.READ)
+        # self.yaml.register_key("our_outpost",py_trees.common.Access.READ)
+        # self.yaml.register_key("our_color",py_trees.common.Access.READ)
+        self.yaml.register_key("blood_limit",py_trees.common.Access.READ)
 
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key("goal",py_trees.common.Access.WRITE)
@@ -107,7 +101,6 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
         self.blackboard.register_key("running",py_trees.common.Access.READ)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
-        self.blackboard.register_key("controller",py_trees.common.Access.WRITE)
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
 
         self.points = []
@@ -118,48 +111,55 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.referee_condition = referee_condition
         self.node = node
         self.blackboard.dec_now = None
-        self.controller = controller
         self.wait_begin = False
         self.nav = nav
         self.end_time = 0
 
     def condition(self):
-        if self.referee_condition == 1:
-            # if self.blackboard.Referee.bullet_remaining_num_17mm <= 0:
-            #     if self.points == []:
-            #         self.points = self.yaml.__getattr__(self.points_name)
+        if self.referee_condition == 'home':
+            if self.blackboard.Referee.remain_hp < self.yaml.blood_limit:
+                return True
+        elif self.referee_condition == 'mid':
+            return True
 
-            #     self.len = len(self.points)
+        return False 
 
-            #     if self.blackboard.Referee.game_progress!=4:
-            #         return False
 
-            #     return True
+        # if self.referee_condition == 1:
+        #     if self.blackboard.Referee.bullet_remaining_num_17mm <= 0:
+        #         if self.points == []:
+        #             self.points = self.yaml.__getattr__(self.points_name)
 
-            if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') > self.yaml.our_outpost:
-                return False
-        elif self.referee_condition == 2:
-            their_color = 'red'
-            if self.yaml.our_color == 'red':
-                their_color = 'blue'
-            if getattr(self.blackboard.Referee,their_color + '_outpost_hp') > self.yaml.their_outpost:
-                return False
-            if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') <= self.yaml.our_outpost:
-                return False
+        #         self.len = len(self.points)
+
+        #         if self.blackboard.Referee.game_progress!=4:
+        #             return False
+
+        #         return True
+
+        #     if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') > self.yaml.our_outpost:
+        #         return False
+        # elif self.referee_condition == 2:
+        #     their_color = 'red'
+        #     if self.yaml.our_color == 'red':
+        #         their_color = 'blue'
+        #     if getattr(self.blackboard.Referee,their_color + '_outpost_hp') > self.yaml.their_outpost:
+        #         return False
+        #     if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') <= self.yaml.our_outpost:
+        #         return False
         
-        if self.points == []:
-            self.points = self.yaml.__getattr__(self.points_name)
+        # if self.points == []:
+        #     self.points = self.yaml.__getattr__(self.points_name)
 
-        self.len = len(self.points)
+        # self.len = len(self.points)
 
-        if self.blackboard.Referee.game_progress!=4:
-            return False
+        # if self.blackboard.Referee.game_progress!=4:
+        #     return False
 
-        return True
+        # return True
     
     def init_dec(self):
         self.blackboard.dec_now = self.name
-        self.blackboard.controller = self.controller
         self.point_now = self.points[0]
         self.wait_begin = False
         self.end_time = 0
@@ -180,6 +180,9 @@ class Patrol(py_trees.behaviour.Behaviour):
         if not self.condition():
             return Status.FAILURE
         
+        self.points = self.yaml.__getattr__(self.points_name)
+        self.len = len(self.points)
+        
         # 初始化决策
         if self.blackboard.dec_now != self.name:
             self.init_dec()
@@ -196,7 +199,10 @@ class Patrol(py_trees.behaviour.Behaviour):
         # 2. 未到达，继续发点
         # 3. wait_begin已经开启，时间未达到，直接继续发送当前点位
         # 4. wait_begin已经开启，时间达到，进入go_to_next尝试发送下一点位
+        #   4.1 若到达的是home 并且 为满血，退出 goto_home
         if self.wait_begin:
+            if self.referee_condition=='home' and self.blackboard.Referee.remain_hp >= 399:
+                return Status.FAILURE
             if time.time() > self.end_time:
                 self.wait_begin = False
                 self.go_to_next()
@@ -209,7 +215,6 @@ class Patrol(py_trees.behaviour.Behaviour):
         
         if self.blackboard.reach_goal:
             self.wait_begin = True
-            self.time_ = time.time()
             tmp = 0
             if self.blackboard.Referee.bullet_remaining_num_17mm > 0:
                 tmp = random.uniform(3,4)
@@ -220,7 +225,7 @@ class Patrol(py_trees.behaviour.Behaviour):
             self.blackboard.goal = self.point_now
             self.node.get_logger().info("%s: send goal x:%f y:%f"%(self.name,self.point_now['x'],self.point_now['y']))
         
-        return Status.SUCCESS     
+        return Status.SUCCESS
     
 class CheckNavState(py_trees.behaviour.Behaviour):
     '''
@@ -232,15 +237,17 @@ class CheckNavState(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("running",py_trees.common.Access.READ)
         self.blackboard.register_key("running",py_trees.common.Access.WRITE)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.WRITE)
-        self.blackboard.register_key("priority",py_trees.common.Access.WRITE)
+        self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
+
+        self.blackboard.register_key('first_reach_mid',py_trees.common.Access.WRITE)
 
         self.nav = nav
         self.blackboard.running = Bool()
         self.blackboard.running.data = False
         self.node = node
         self.blackboard.reach_goal = False
-        self.blackboard.priority = Bool()
-        self.blackboard.priority.data = False
+
+        self.blackboard.first_reach_mid = False
 
     def update(self):
         if not self.blackboard.running.data:
@@ -252,6 +259,8 @@ class CheckNavState(py_trees.behaviour.Behaviour):
             if self.nav.getResult() == TaskResult.SUCCEEDED:
                 self.node.get_logger().info("success")
                 self.blackboard.reach_goal = True
+                if self.blackboard.dec_now == 'goto_mid':
+                    self.blackboard.first_reach_mid = True
             else:
                 self.node.get_logger().info("fail")
                 self.nav.clearAllCostmaps()
@@ -259,35 +268,6 @@ class CheckNavState(py_trees.behaviour.Behaviour):
         else:
             pass
             #print(self.nav.getFeedback())
-
-        return Status.SUCCESS
-    
-class PriorityDec(py_trees.behaviour.Behaviour):
-    def __init__(self, name: str, node:Node):
-        super().__init__(name)
-        self.blackboard = self.attach_blackboard_client()
-        self.blackboard.register_key("priority",py_trees.common.Access.WRITE)
-        self.blackboard.register_key("running",py_trees.common.Access.READ)
-        self.blackboard.register_key("auto_aim",py_trees.common.Access.READ)
-        self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
-
-        self.node = node
-
-    def update(self):
-        if self.blackboard.running.data:
-            self.blackboard.priority.data = True
-            self.node.get_logger().info("priority: nav")
-        else:
-            if self.blackboard.dec_now == "outpost":
-                if self.blackboard.auto_aim.id != 'outpost':
-                    self.blackboard.priority.data = True
-                    self.node.get_logger().info("priority: nav")
-                else:
-                    self.blackboard.priority.data = False
-                    self.node.get_logger().info("priority: auto_aim id: %s"%self.blackboard.auto_aim.id)
-            else:
-                self.blackboard.priority.data = False
-                self.node.get_logger().info("priority: auto_aim id: %s"%self.blackboard.auto_aim.id)
 
         return Status.SUCCESS
     
@@ -300,14 +280,40 @@ class RotDec(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
         self.blackboard.register_key("rot",py_trees.common.Access.WRITE)
 
-        self.blackboard.rot = Bool()
-        self.blackboard.rot.data = False
+        self.blackboard.register_key('first_reach_mid',py_trees.common.Access.READ)
+
+        self.blackboard.rot = Int32()
+        self.blackboard.rot.data = 0
 
     def update(self):
-        if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') <= 0.1:
-            self.blackboard.rot.data = True
+        # if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') <= 0.1:
+        #     self.blackboard.rot.data = True
+        # else:
+        #     self.blackboard.rot.data = False
+
+        if self.blackboard.first_reach_mid:
+            self.blackboard.rot.data = 22000
         else:
-            self.blackboard.rot.data = False
+            self.blackboard.rot.data = 0
+
+        return Status.SUCCESS
+    
+class YawDec(py_trees.behaviour.Behaviour):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.blackboard = self.attach_blackboard_client()
+        self.yaml = self.attach_blackboard_client(namespace="yaml")
+        self.yaml.register_key("our_color",py_trees.common.Access.READ)
+        self.blackboard.register_key("Referee",py_trees.common.Access.READ)
+        self.blackboard.register_key("yaw",py_trees.common.Access.WRITE)
+
+        self.blackboard.register_key('first_reach_mid',py_trees.common.Access.READ)
+
+        self.blackboard.yaw = Float32()
+        self.blackboard.yaw.data = 0.0
+
+    def update(self):
+        pass
 
         return Status.SUCCESS
     
