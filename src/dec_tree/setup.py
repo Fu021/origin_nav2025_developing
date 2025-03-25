@@ -1,8 +1,5 @@
 from setuptools import find_packages, setup
-import glob
 package_name = 'dec_tree'
-
-yaml_files = glob.glob('config/*.yaml')
 
 setup(
     name=package_name,
@@ -12,7 +9,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/config', yaml_files),
+        ('share/' + package_name + '/config', ['config/rmul.yaml','config/new_test.yaml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

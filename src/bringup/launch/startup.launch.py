@@ -74,7 +74,12 @@ def generate_launch_description():
             ("/tf_static", "tf_static"),
         ],
     )
-
+    dec = Node(
+            package="dec_tree",
+            executable="root",
+            namespace='',
+            output="screen",
+        )
     seg = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             get_package_share_directory('linefit_ground_segmentation_ros')+"/launch/segmentation.launch.py"
@@ -87,7 +92,7 @@ def generate_launch_description():
             ComposableNode(
                 package='nav2_map_server',
                 plugin='nav2_map_server::MapServer',
-                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', '6floor_mid.yaml')}],
+                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'blank.yaml')}],
                 name='map_server',),
             ComposableNode(
                 package='nav2_lifecycle_manager',
@@ -170,6 +175,7 @@ def generate_launch_description():
              p_to_l,
              fake_baselink,
             #  nav2,
-            icp
+            #icp,
+            
         ]
     )

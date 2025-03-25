@@ -16,7 +16,7 @@ def create_get_data(node,qos_profile,nav):
 
     get_data_from_yaml = GetDataFromYaml(
         name="get_data_from_yaml",
-        yaml_name="rmul",
+        yaml_name="new_test",
         node=node
     )
 

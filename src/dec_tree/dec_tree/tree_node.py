@@ -93,7 +93,7 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.yaml.register_key(points_name,py_trees.common.Access.READ)
         # self.yaml.register_key("our_outpost",py_trees.common.Access.READ)
         # self.yaml.register_key("our_color",py_trees.common.Access.READ)
-        self.yaml.register_key("blood_limit",py_trees.common.Access.READ)
+        # self.yaml.register_key("their_outpost",py_trees.common.Access.READ)
 
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key("goal",py_trees.common.Access.WRITE)
@@ -116,11 +116,13 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.end_time = 0
 
     def condition(self):
-        if self.referee_condition == 'home':
-            if self.blackboard.Referee.remain_hp < self.yaml.blood_limit:
+        if self.referee_condition == 'home': 
+            if self.blackboard.dec_now != 'goto_home' and self.blackboard.Referee.remain_hp < 150:
+                return True #需要回家
+            elif self.blackboard.dec_now == 'goto_home' and self.blackboard.Referee.remain_hp < 399:
                 return True
         elif self.referee_condition == 'mid':
-            return True
+            return True #需要去mid
 
         return False 
 
@@ -177,13 +179,15 @@ class Patrol(py_trees.behaviour.Behaviour):
 
     def update(self):
         # 初始条件
-        if not self.condition():
+        if not self.condition(): 
+            # hp>150 且不需要去mid，不需要走此步
             return Status.FAILURE
         
         self.points = self.yaml.__getattr__(self.points_name)
         self.len = len(self.points)
         
         # 初始化决策
+        print(self.blackboard.dec_now,self.name)
         if self.blackboard.dec_now != self.name:
             self.init_dec()
             self.blackboard.goal = self.point_now
@@ -199,13 +203,11 @@ class Patrol(py_trees.behaviour.Behaviour):
         # 2. 未到达，继续发点
         # 3. wait_begin已经开启，时间未达到，直接继续发送当前点位
         # 4. wait_begin已经开启，时间达到，进入go_to_next尝试发送下一点位
-        #   4.1 若到达的是home 并且 为满血，退出 goto_home
+        #   4.1 如果到达的是home，并且remain_hp 到达 400血后退出go_home
         if self.wait_begin:
-            if self.referee_condition=='home' and self.blackboard.Referee.remain_hp >= 399:
-                return Status.FAILURE
             if time.time() > self.end_time:
                 self.wait_begin = False
-                self.go_to_next()
+                self.go_to_next() 
                 self.blackboard.goal = self.point_now
                 self.node.get_logger().info("%s: send goal x:%f y:%f"%(self.name,self.point_now['x'],self.point_now['y']))
                 return Status.SUCCESS
@@ -313,7 +315,10 @@ class YawDec(py_trees.behaviour.Behaviour):
         self.blackboard.yaw.data = 0.0
 
     def update(self):
-        pass
+        if self.blackboard.first_reach_mid:
+            self.blackboard.yaw.data = 1.0
+        else:
+            self.blackboard.yaw.data = 0.0
 
         return Status.SUCCESS
     

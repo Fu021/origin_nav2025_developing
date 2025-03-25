@@ -52,7 +52,7 @@ def find_usb_devices():
     return 0
              
 def send_all(yaw_aim,pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_speed_nav,pitch_mode):
-    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, 22000,0, 1)
+    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_speed_nav, 1)
     message= build_all_message(data)
     ser.write(message)
 
@@ -64,12 +64,12 @@ class SPNode(Node):
         self.subscription = self.create_subscription(Target, '/armor_solver/target', self.target_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
         self.subscription = self.create_subscription(GimbalCmd, '/armor_solver/cmd_gimbal', self.all_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
         self.publish_gimbal = self.create_publisher(Gimbal,"gimbal_status",10)
-        self.publish_referee:Publisher = self.create_publisher(Referee,"referee",10)
+        self.publish_referee:Publisher = self.create_publisher(Referee,"Referee",10)
         self.publisher_timer = self.create_timer(0.0067,self.publish_message)
         #导航
         self.sub_nav = self.create_subscription(Twist, '/cmd_vel_chassis', self.nav_callback,rclpy.qos.qos_profile_sensor_data)
         self.sub_rot = self.create_subscription(Int32,"/nav_rotate",self.rot_callback,10)
-        self.sub_pitch = self.create_subscription(Bool,"/nav_pitch",self.pitch_callback,10)
+        self.sub_yaw = self.create_subscription(Float32,'nav_yaw',self.yaw_callback,10)
 
         self.rotate = 0.0
         self.pitch = 0
@@ -84,24 +84,17 @@ class SPNode(Node):
 
         self.ready = 0
         
+    def yaw_callback(self,msg:Float32):
+        self.v_yaw = msg.data
     def target_callback(self,msg:Target):
         self.track = msg.tracking
-    def pitch_callback(self,msg:Bool):
-        if msg.data:
-            self.pitch = 1
-        else:
-            self.pitch = 0
 
-    def rot_callback(self,msg:Bool):
-        if msg.data:
-            self.rotate = 1.0
-        else:
-            self.rotate = 0.0
+    def rot_callback(self,msg:Int32):
+        self.rotate = msg.data
 
     def nav_callback(self, msg:Twist):
          self.vx=msg.linear.x
          self.vy=msg.linear.y
-         self.v_yaw=msg.angular.z
 
     def all_callback(self,msg):
         self.msg_fire=msg.fire_advice
@@ -131,8 +124,8 @@ class SPNode(Node):
         if self.ready:
             send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
         else:
-            # send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,0,0,self.rotate,0,self.pitch)
-            send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
+            send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,0,0,self.rotate,0,self.pitch)
+            #send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
 
 def receive_message(node:SPNode):
     global parsed_data
