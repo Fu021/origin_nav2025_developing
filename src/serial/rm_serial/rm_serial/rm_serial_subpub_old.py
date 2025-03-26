@@ -81,8 +81,6 @@ class SPNode(Node):
         self.msg_fire = 0
         self.track = 0.0
         self.pitch_aim = 0.0
-
-        self.ready = 0
         
     def yaw_callback(self,msg:Float32):
         self.v_yaw = msg.data
@@ -121,11 +119,7 @@ class SPNode(Node):
         # print(t.transform.rotation)
         self.publish_gimbal.publish(gimbal_msg)
         #print(vx,vy,v_yaw,rotate,pitch)
-        if self.ready:
-            send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
-        else:
-            send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,0,0,self.rotate,0,self.pitch)
-            #send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
+        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
 
 def receive_message(node:SPNode):
     global parsed_data
@@ -148,10 +142,6 @@ def receive_message(node:SPNode):
                     gimbal_msg.roll  = result[1]
                     gimbal_msg.pitch= result[2]
                 if referee_data != None:
-                    if referee_data.game_progress == 4:
-                        node.ready = 1
-                    else:
-                        node.ready = 0
                     node.publish_referee.publish(referee_data)
                     # 发布消息
                 #print(gimbal_msg.yaw,gimbal_msg.roll,gimbal_msg.pitch)

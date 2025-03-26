@@ -91,6 +91,7 @@ class Patrol(py_trees.behaviour.Behaviour):
         super().__init__(name)
         self.yaml = self.attach_blackboard_client(namespace="yaml")
         self.yaml.register_key(points_name,py_trees.common.Access.READ)
+        self.yaml.register_key('blood_limit',py_trees.common.Access.READ)
         # self.yaml.register_key("our_outpost",py_trees.common.Access.READ)
         # self.yaml.register_key("our_color",py_trees.common.Access.READ)
         # self.yaml.register_key("their_outpost",py_trees.common.Access.READ)
@@ -102,6 +103,7 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("running",py_trees.common.Access.READ)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
+        self.blackboard.register_key('mid_reach',py_trees.common.Access.WRITE)
 
         self.points = []
         self.name = name
@@ -114,10 +116,14 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.wait_begin = False
         self.nav = nav
         self.end_time = 0
+        self.blackboard.mid_reach = False
 
     def condition(self):
+        if self.blackboard.Referee.game_progress != 4:
+            return False
+
         if self.referee_condition == 'home': 
-            if self.blackboard.dec_now != 'goto_home' and self.blackboard.Referee.remain_hp < 150:
+            if self.blackboard.dec_now != 'goto_home' and self.blackboard.Referee.remain_hp < self.yaml.blood_limit:
                 return True #需要回家
             elif self.blackboard.dec_now == 'goto_home' and self.blackboard.Referee.remain_hp < 399:
                 return True
@@ -162,6 +168,10 @@ class Patrol(py_trees.behaviour.Behaviour):
     
     def init_dec(self):
         self.blackboard.dec_now = self.name
+
+        if self.blackboard.dec_now == 'goto_home':
+            self.blackboard.mid_reach = False
+
         self.point_now = self.points[0]
         self.wait_begin = False
         self.end_time = 0
@@ -179,7 +189,7 @@ class Patrol(py_trees.behaviour.Behaviour):
 
     def update(self):
         # 初始条件
-        if not self.condition(): 
+        if not self.condition():
             # hp>150 且不需要去mid，不需要走此步
             return Status.FAILURE
         
@@ -216,6 +226,8 @@ class Patrol(py_trees.behaviour.Behaviour):
                 return Status.SUCCESS
         
         if self.blackboard.reach_goal:
+            if self.blackboard.dec_now == 'goto_mid':
+                self.blackboard.mid_reach = True
             self.wait_begin = True
             tmp = 0
             if self.blackboard.Referee.bullet_remaining_num_17mm > 0:
@@ -292,7 +304,7 @@ class RotDec(py_trees.behaviour.Behaviour):
         #     self.blackboard.rot.data = True
         # else:
         #     self.blackboard.rot.data = False
-
+        
         if self.blackboard.first_reach_mid:
             self.blackboard.rot.data = 22000
         else:
@@ -310,13 +322,17 @@ class YawDec(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("yaw",py_trees.common.Access.WRITE)
 
         self.blackboard.register_key('first_reach_mid',py_trees.common.Access.READ)
+        self.blackboard.register_key('mid_reach',py_trees.common.Access.READ)
 
         self.blackboard.yaw = Float32()
         self.blackboard.yaw.data = 0.0
 
     def update(self):
         if self.blackboard.first_reach_mid:
-            self.blackboard.yaw.data = 1.0
+            if self.blackboard.mid_reach:
+                self.blackboard.yaw.data = 2.0
+            else:
+                self.blackboard.yaw.data = 1.0
         else:
             self.blackboard.yaw.data = 0.0
 

@@ -25,7 +25,7 @@ keyBindings = {
 class RefereePub(Node):
     def __init__(self):
         super().__init__('referee_fake')
-        self.publisher = self.create_publisher(Referee, '/Referee', 10)
+        self.publisher = self.create_publisher(Referee, '/referee', 10)
         self.remain_hp = 600
         self.min_hp = 0
         self.max_hp = 600
