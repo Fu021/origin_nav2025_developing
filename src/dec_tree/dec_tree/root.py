@@ -7,6 +7,7 @@ from rclpy.qos import QoSProfile
 from .tree_node import GetDataFromYaml,PubGoal,CheckNavState,Patrol,RotDec,YawDec
 from referee_msg.msg import Referee
 from std_msgs.msg import Bool, Int32, Float32
+from geometry_msgs.msg import Twist
 
 def create_get_data(node,qos_profile,nav):
     get_data = py_trees.composites.Parallel(
@@ -16,7 +17,7 @@ def create_get_data(node,qos_profile,nav):
 
     get_data_from_yaml = GetDataFromYaml(
         name="get_data_from_yaml",
-        yaml_name="new_test",
+        yaml_name="rmul",
         node=node
     )
 
@@ -52,46 +53,7 @@ def create_get_data(node,qos_profile,nav):
 
     return get_data
 
-def create_send_data(node,qos_profile):
-    send_data = py_trees.composites.Parallel(
-        name="send_data",
-        policy=py_trees.common.ParallelPolicy.SuccessOnAll()
-    )
-
-    send_rot = py_trees_ros.publishers.FromBlackboard(
-        name="send_rot",
-        topic_name="nav_rotate",
-        topic_type=Int32,
-        qos_profile=qos_profile,
-        blackboard_variable="rot"
-    )
-    send_rot.setup(node=node)
-
-    # send_pitch = py_trees_ros.publishers.FromBlackboard(
-    #     name="send_pitch",
-    #     topic_name="nav_pitch",
-    #     topic_type=Bool,
-    #     qos_profile=qos_profile,
-    #     blackboard_variable="pitch"
-    # )
-    # send_pitch.setup(node=node)
-
-    send_yaw = py_trees_ros.publishers.FromBlackboard(
-        name="send_yaw",
-        topic_name="nav_yaw",
-        topic_type=Float32,
-        qos_profile=qos_profile,
-        blackboard_variable="yaw"
-    )
-    send_yaw.setup(node=node)
-
-    send_data.add_children(
-        [send_rot,send_yaw]
-    )
-
-    return send_data
-
-def create_dec(node,nav):
+def create_dec(node,nav,qos_profile):
     dec = py_trees.composites.Sequence(
         name="dec",
         memory=False
@@ -123,16 +85,47 @@ def create_dec(node,nav):
         referee_condition='home'
     )
 
+    rot = py_trees.composites.Sequence(
+        name = 'rot',
+        memory=False
+    )
+
+
     rot_dec = RotDec(
         name="rot_dec"
     )
+    send_rot = py_trees_ros.publishers.FromBlackboard(
+        name="send_rot",
+        topic_name="nav_rotate",
+        topic_type=Int32,
+        qos_profile=qos_profile,
+        blackboard_variable="rot"
+    )
+    send_rot.setup(node=node)
 
-    # pitch_dec = PitchDec(
-    #     name="pitch_dec"
-    # )
+    rot.add_children(
+        [rot_dec,send_rot]
+    )
+
+    yaw = py_trees.composites.Sequence(
+        name = 'yaw',
+        memory=False
+    )
 
     yaw_dec = YawDec(
         name='yaw_dec'
+    )
+    send_yaw = py_trees_ros.publishers.FromBlackboard(
+        name="send_yaw",
+        topic_name="nav_yaw",
+        topic_type=Float32,
+        qos_profile=qos_profile,
+        blackboard_variable="yaw"
+    )
+    send_yaw.setup(node=node)
+
+    yaw.add_children(
+        [yaw_dec,send_yaw]
     )
 
     dec_selector.add_children(
@@ -140,7 +133,7 @@ def create_dec(node,nav):
     )
 
     dec.add_children(
-        [rot_dec,yaw_dec,dec_selector,pub_goal]
+        [dec_selector,rot,yaw,pub_goal]
     )
 
     return dec
@@ -156,12 +149,10 @@ def create_tree(node):
 
     get_data = create_get_data(node,qos_profile,nav)
 
-    send_data = create_send_data(node,qos_profile)
-
-    dec = create_dec(node,nav)
+    dec = create_dec(node,nav,qos_profile)
 
     root.add_children(
-        [get_data,send_data,dec]
+        [get_data,dec]
     )
 
     return root

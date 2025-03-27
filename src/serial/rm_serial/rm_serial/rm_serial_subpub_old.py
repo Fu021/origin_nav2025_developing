@@ -83,7 +83,10 @@ class SPNode(Node):
         self.pitch_aim = 0.0
         
     def yaw_callback(self,msg:Float32):
-        self.v_yaw = msg.data
+        if self.vx == 0.0 and self.vy == 0.0 and msg.data == 1.0:
+            self.v_yaw = 2.0
+        else:
+            self.v_yaw = msg.data
     def target_callback(self,msg:Target):
         self.track = msg.tracking
 

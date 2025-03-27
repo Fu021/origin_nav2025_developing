@@ -92,7 +92,7 @@ def generate_launch_description():
             ComposableNode(
                 package='nav2_map_server',
                 plugin='nav2_map_server::MapServer',
-                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'blank.yaml')}],
+                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'rmul_2025.yaml')}],
                 name='map_server',),
             ComposableNode(
                 package='nav2_lifecycle_manager',

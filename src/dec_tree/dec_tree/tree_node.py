@@ -103,7 +103,6 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("running",py_trees.common.Access.READ)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
-        self.blackboard.register_key('mid_reach',py_trees.common.Access.WRITE)
 
         self.points = []
         self.name = name
@@ -116,7 +115,6 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.wait_begin = False
         self.nav = nav
         self.end_time = 0
-        self.blackboard.mid_reach = False
 
     def condition(self):
         if self.blackboard.Referee.game_progress != 4:
@@ -168,10 +166,6 @@ class Patrol(py_trees.behaviour.Behaviour):
     
     def init_dec(self):
         self.blackboard.dec_now = self.name
-
-        if self.blackboard.dec_now == 'goto_home':
-            self.blackboard.mid_reach = False
-
         self.point_now = self.points[0]
         self.wait_begin = False
         self.end_time = 0
@@ -213,11 +207,10 @@ class Patrol(py_trees.behaviour.Behaviour):
         # 2. 未到达，继续发点
         # 3. wait_begin已经开启，时间未达到，直接继续发送当前点位
         # 4. wait_begin已经开启，时间达到，进入go_to_next尝试发送下一点位
-        #   4.1 如果到达的是home，并且remain_hp 到达 400血后退出go_home
         if self.wait_begin:
             if time.time() > self.end_time:
                 self.wait_begin = False
-                self.go_to_next() 
+                self.go_to_next()
                 self.blackboard.goal = self.point_now
                 self.node.get_logger().info("%s: send goal x:%f y:%f"%(self.name,self.point_now['x'],self.point_now['y']))
                 return Status.SUCCESS
@@ -226,8 +219,6 @@ class Patrol(py_trees.behaviour.Behaviour):
                 return Status.SUCCESS
         
         if self.blackboard.reach_goal:
-            if self.blackboard.dec_now == 'goto_mid':
-                self.blackboard.mid_reach = True
             self.wait_begin = True
             tmp = 0
             if self.blackboard.Referee.bullet_remaining_num_17mm > 0:
@@ -320,19 +311,17 @@ class YawDec(py_trees.behaviour.Behaviour):
         self.yaml.register_key("our_color",py_trees.common.Access.READ)
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
         self.blackboard.register_key("yaw",py_trees.common.Access.WRITE)
+        self.blackboard.register_key('cmd_vel',py_trees.common.Access.READ)
 
         self.blackboard.register_key('first_reach_mid',py_trees.common.Access.READ)
-        self.blackboard.register_key('mid_reach',py_trees.common.Access.READ)
+        self.blackboard.register_key("running",py_trees.common.Access.READ)
 
         self.blackboard.yaw = Float32()
         self.blackboard.yaw.data = 0.0
 
     def update(self):
         if self.blackboard.first_reach_mid:
-            if self.blackboard.mid_reach:
-                self.blackboard.yaw.data = 2.0
-            else:
-                self.blackboard.yaw.data = 1.0
+            self.blackboard.yaw.data = 1.0
         else:
             self.blackboard.yaw.data = 0.0
 
