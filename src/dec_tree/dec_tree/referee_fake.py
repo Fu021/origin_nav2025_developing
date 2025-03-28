@@ -52,6 +52,7 @@ class RefereePub(Node):
             msg = Referee()
             msg.remain_hp = self.remain_hp
             msg.game_progress = self.game_progress
+            msg.bullet_remaining_num_17mm = 100
             self.publisher.publish(msg)
             time.sleep(0.1)
     

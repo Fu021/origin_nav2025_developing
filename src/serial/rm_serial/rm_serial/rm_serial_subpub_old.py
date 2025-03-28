@@ -71,6 +71,8 @@ class SPNode(Node):
         self.sub_rot = self.create_subscription(Int32,"/nav_rotate",self.rot_callback,10)
         self.sub_yaw = self.create_subscription(Float32,'nav_yaw',self.yaw_callback,10)
 
+        self.clock_timer = self.create_timer(6,self.clock_callback)
+
         self.rotate = 0.0
         self.pitch = 0
         self.vx = 0.0
@@ -81,12 +83,20 @@ class SPNode(Node):
         self.msg_fire = 0
         self.track = 0.0
         self.pitch_aim = 0.0
+
+        self.clock = 1
         
+    def clock_callback(self):
+        if self.clock == 1:
+            self.clock = -1
+        else:
+            self.clock = 1
+
     def yaw_callback(self,msg:Float32):
         if self.vx == 0.0 and self.vy == 0.0 and msg.data == 1.0:
-            self.v_yaw = 2.0
+            self.v_yaw = self.clock*2.0
         else:
-            self.v_yaw = msg.data
+            self.v_yaw = self.clock*msg.data
     def target_callback(self,msg:Target):
         self.track = msg.tracking
 
