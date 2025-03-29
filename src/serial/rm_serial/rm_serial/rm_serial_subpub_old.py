@@ -132,7 +132,7 @@ class SPNode(Node):
         # print(t.transform.rotation)
         self.publish_gimbal.publish(gimbal_msg)
         #print(vx,vy,v_yaw,rotate,pitch)
-        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch)
+        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,22000,self.v_yaw,self.pitch)
 
 def receive_message(node:SPNode):
     global parsed_data

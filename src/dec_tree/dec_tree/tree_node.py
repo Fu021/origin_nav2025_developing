@@ -77,7 +77,19 @@ class PubGoal(py_trees.behaviour.Behaviour):
             self.blackboard.running.data = True
 
         return Status.SUCCESS
+
+class UnpackReferee(py_trees.behaviour.Behaviour):
+    def __init__(self, name):
+        super().__init__(name)
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key('Referee',py_trees.common.Access.READ)
+        self.blackboard.register_key('mid_occupy',py_trees.common.Access.WRITE)
     
+    def update(self):
+        self.blackboard.mid_occupy = (self.blackboard.Referee.event_type>>21)&3
+        print("mid_occupy: %d"%self.blackboard.mid_occupy)
+        return Status.SUCCESS
+
 class Patrol(py_trees.behaviour.Behaviour):
     '''
         巡逻\n
@@ -103,6 +115,7 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("running",py_trees.common.Access.READ)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
+        self.blackboard.register_key('mid_occupy',py_trees.common.Access.READ)
 
         self.points = []
         self.name = name
@@ -121,9 +134,16 @@ class Patrol(py_trees.behaviour.Behaviour):
             return False
 
         if self.referee_condition == 'home': 
+            # True： 需要回家
             if self.blackboard.dec_now != 'goto_home' and self.blackboard.Referee.remain_hp < self.yaml.blood_limit:
-                return True #需要回家
+                return True
             elif self.blackboard.dec_now == 'goto_home' and self.blackboard.Referee.remain_hp < 399:
+                return True
+            elif self.blackboard.mid_occupy == 2 and self.blackboard.Referee.bullet_remaining_num_17mm <= 0:
+                return True
+        elif self.referee_condition == 'peek':
+            # True： 需要去peek
+            if self.blackboard.mid_occupy == 2:
                 return True
         elif self.referee_condition == 'mid':
             return True #需要去mid
@@ -244,7 +264,6 @@ class CheckNavState(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("reach_goal",py_trees.common.Access.WRITE)
         self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
 
-        self.blackboard.register_key('first_reach_mid',py_trees.common.Access.WRITE)
 
         self.nav = nav
         self.blackboard.running = Bool()
@@ -252,7 +271,6 @@ class CheckNavState(py_trees.behaviour.Behaviour):
         self.node = node
         self.blackboard.reach_goal = False
 
-        self.blackboard.first_reach_mid = False
 
     def update(self):
         if not self.blackboard.running.data:
@@ -264,8 +282,6 @@ class CheckNavState(py_trees.behaviour.Behaviour):
             if self.nav.getResult() == TaskResult.SUCCEEDED:
                 self.node.get_logger().info("success")
                 self.blackboard.reach_goal = True
-                if self.blackboard.dec_now == 'goto_mid':
-                    self.blackboard.first_reach_mid = True
             else:
                 self.node.get_logger().info("fail")
                 self.nav.clearAllCostmaps()
@@ -285,7 +301,6 @@ class RotDec(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
         self.blackboard.register_key("rot",py_trees.common.Access.WRITE)
 
-        self.blackboard.register_key('first_reach_mid',py_trees.common.Access.READ)
 
         self.blackboard.rot = Int32()
         self.blackboard.rot.data = 0
@@ -296,10 +311,7 @@ class RotDec(py_trees.behaviour.Behaviour):
         # else:
         #     self.blackboard.rot.data = False
         
-        if self.blackboard.first_reach_mid:
-            self.blackboard.rot.data = 22000
-        else:
-            self.blackboard.rot.data = 0
+        self.blackboard.rot.data = 22000
 
         return Status.SUCCESS
     
@@ -312,18 +324,13 @@ class YawDec(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
         self.blackboard.register_key("yaw",py_trees.common.Access.WRITE)
         self.blackboard.register_key('cmd_vel',py_trees.common.Access.READ)
-
-        self.blackboard.register_key('first_reach_mid',py_trees.common.Access.READ)
         self.blackboard.register_key("running",py_trees.common.Access.READ)
 
         self.blackboard.yaw = Float32()
         self.blackboard.yaw.data = 0.0
 
     def update(self):
-        if self.blackboard.first_reach_mid:
-            self.blackboard.yaw.data = 1.0
-        else:
-            self.blackboard.yaw.data = 0.0
+        self.blackboard.yaw.data = 1.0
 
         return Status.SUCCESS
     

@@ -4,7 +4,7 @@ import py_trees_ros
 import py_trees
 from nav2_simple_commander.robot_navigator import BasicNavigator
 from rclpy.qos import QoSProfile
-from .tree_node import GetDataFromYaml,PubGoal,CheckNavState,Patrol,RotDec,YawDec
+from .tree_node import GetDataFromYaml,PubGoal,CheckNavState,Patrol,RotDec,YawDec,UnpackReferee
 from referee_msg.msg import Referee
 from std_msgs.msg import Bool, Int32, Float32
 from geometry_msgs.msg import Twist
@@ -27,6 +27,10 @@ def create_get_data(node,qos_profile,nav):
         node=node
     )
 
+    referee_list = py_trees.composites.Sequence(
+        name='referee_list',
+        memory=False
+    )
     save_Referee = py_trees_ros.subscribers.ToBlackboard(
         name="save_Referee",
         topic_name="/Referee",
@@ -36,6 +40,10 @@ def create_get_data(node,qos_profile,nav):
         qos_profile=qos_profile
     )
     save_Referee.setup(node=node)
+    unpack_referee = UnpackReferee(name='unpack_referee')
+    referee_list.add_children(
+        [save_Referee,unpack_referee]
+    )
 
     # save_auto_aim = py_trees_ros.subscribers.ToBlackboard(
     #     name="save_auto_aim",
@@ -48,7 +56,7 @@ def create_get_data(node,qos_profile,nav):
     # save_auto_aim.setup(node=node)
 
     get_data.add_children(
-        [get_data_from_yaml,save_Referee,check_nav_state]
+        [get_data_from_yaml,referee_list,check_nav_state]
     )
 
     return get_data
@@ -75,6 +83,14 @@ def create_dec(node,nav,qos_profile):
         node=node,
         nav=nav,
         referee_condition='mid'
+    )
+
+    goto_peek = Patrol(
+        name='goto_peek',
+        points_name='peek',
+        node=node,
+        nav=nav,
+        referee_condition='peek'
     )
 
     goto_home = Patrol(
@@ -129,7 +145,7 @@ def create_dec(node,nav,qos_profile):
     )
 
     dec_selector.add_children(
-        [goto_home,goto_mid]
+        [goto_home,goto_peek,goto_mid]
     )
 
     dec.add_children(
