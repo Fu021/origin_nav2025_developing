@@ -1,7 +1,7 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.launch_description_sources import PythonLaunchDescriptionSource,FrontendLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import LoadComposableNodes,ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
@@ -25,6 +25,12 @@ def generate_launch_description():
             get_package_share_directory('lidar_transform')+"/launch/lidar_transform.launch.py"
         )
     )
+
+    # dll = IncludeLaunchDescription(
+    #     FrontendLaunchDescriptionSource(
+    #         get_package_share_directory('dll')+"/launch/lidar_transform.launch.py"
+    #     )
+    # )
 
     start_nav2_rviz = Node(
         package="rviz2",
@@ -50,7 +56,7 @@ def generate_launch_description():
             ComposableNode(
                 package='nav2_map_server',
                 plugin='nav2_map_server::MapServer',
-                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map','simulation','rmul_2025.yaml')}],
+                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map','simulation','rmuc_2025.yaml')}],
                 name='map_server',),
             ComposableNode(
                 package='nav2_lifecycle_manager',
@@ -102,6 +108,8 @@ def generate_launch_description():
                 plugin='tf2_ros::StaticTransformBroadcasterNode',
                 name='map_to_odom',
                 parameters=[{
+                    #                     'translation.x':1.25,
+                    # 'translation.y':6.35,
                     'translation.x':0.0,
                     'translation.y':0.0,
                     'translation.z':0.0,
@@ -122,17 +130,27 @@ def generate_launch_description():
         )
     )
 
+    dec_tree = Node(
+        package="dec_tree",
+        executable="root",
+        namespace='',
+        output="screen",
+
+    )
+
     return LaunchDescription(
         [
             container,
             lidar_transform,
+            pointlio,
             start_nav2_rviz,
             seg,
             load_map_server,
             #nav2,
             p_to_l,
-            #map_to_odom,
-            pointlio,
+            map_to_odom,
+            #dll,
+            #dec_tree
             # amcl_node
         ]
     )

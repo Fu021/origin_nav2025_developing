@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
       Splitter Ratio: 0.5833333134651184
@@ -73,27 +74,29 @@ Visualization Manager:
         base_link:
           Value: true
         chassis:
-          Value: true
+          Value: false
         front_industrial_camera:
           Value: false
         front_industrial_camera_optical_frame:
           Value: false
         front_left_wheel:
-          Value: true
+          Value: false
         front_right_wheel:
-          Value: true
+          Value: false
         gimbal_pitch:
           Value: false
         light_indicator:
           Value: false
         livox_frame:
+          Value: false
+        map:
           Value: true
         odom:
-          Value: false
+          Value: true
         rear_left_wheel:
-          Value: true
+          Value: false
         rear_right_wheel:
-          Value: true
+          Value: false
         speed_monitor:
           Value: false
       Marker Scale: 2
@@ -102,7 +105,41 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        {}
+        map:
+          odom:
+            aft_mapped:
+              base_link:
+                livox_frame:
+                  {}
+              chassis:
+                armor_support_frame_0:
+                  armor_0:
+                    {}
+                armor_support_frame_1:
+                  armor_1:
+                    {}
+                armor_support_frame_2:
+                  armor_2:
+                    {}
+                armor_support_frame_3:
+                  armor_3:
+                    {}
+                front_left_wheel:
+                  {}
+                front_right_wheel:
+                  {}
+                light_indicator:
+                  {}
+                rear_left_wheel:
+                  {}
+                rear_right_wheel:
+                  {}
+              gimbal_pitch:
+                front_industrial_camera:
+                  front_industrial_camera_optical_frame:
+                    {}
+                speed_monitor:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -476,8 +513,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 18.520549774169922
-        Min Value: -0.041877321898937225
+        Max Value: 9.971498489379883
+        Min Value: -0.036730654537677765
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -600,25 +637,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 28.26897430419922
+      Distance: 16.2436466217041
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.062645435333252
-        Y: -1.953703761100769
-        Z: 2.0360183715820312
+        X: 3.572441577911377
+        Y: 3.1741514205932617
+        Z: 2.0655229091644287
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.224797010421753
+      Pitch: 1.5647963285446167
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.0396435260772705
+      Yaw: 4.594645023345947
     Saved: ~
 Window Geometry:
   Displays:

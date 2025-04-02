@@ -47,8 +47,8 @@ def generate_launch_description():
                 plugin='tf2_ros::StaticTransformBroadcasterNode',
                 name='map_to_odom',
                 parameters=[{
-                    'translation.x':0.0,
-                    'translation.y':0.0,
+                    'translation.x':1.25,
+                    'translation.y':6.35,
                     'translation.z':0.0,
                     'rotation.x':0.0,
                     'rotation.y':0.0,
@@ -58,7 +58,7 @@ def generate_launch_description():
                     'child_frame_id':'odom'
                 }]
             ),
-        ]
-    )
+         ]
+     )
     
     return LaunchDescription([load_all_tf])
