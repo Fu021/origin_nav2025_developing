@@ -15,15 +15,16 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <mutex>
 
 namespace lidar_transform
 {
     class LidarTransform : public rclcpp::Node
     {
-        public:
-        explicit LidarTransform(const rclcpp::NodeOptions& options);
+    public:
+        explicit LidarTransform(const rclcpp::NodeOptions &options);
 
-        private:
+    private:
         std::string lidar_custom_topic;
         std::string imu_topic;
         std::string lidar_pointcloud_topic;
@@ -43,27 +44,30 @@ namespace lidar_transform
 
         rclcpp::TimerBase::SharedPtr listen_transform_timer;
 
+        // 添加互斥锁保护共享的变换矩阵
+        std::mutex transform_mutex_;
         Eigen::Affine3f lidar_to_base_link_eigen_3f;
         Eigen::Affine3d lidar_to_base_link_eigen_3d;
 
         std::shared_ptr<tf2_ros::Buffer> buffer;
         std::shared_ptr<tf2_ros::TransformListener> listener;
 
+        // 定义回调组
+        rclcpp::CallbackGroup::SharedPtr lidar_custom_group;
+        rclcpp::CallbackGroup::SharedPtr imu_group;
+        rclcpp::CallbackGroup::SharedPtr lidar_pointcloud_group;
+
         void lidar_custom_callback(
-            const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr& msg
-        );
+            const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr &msg);
         void lidar_pointcloud_callback(
-            const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg
-        );
+            const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg);
         void imu_callback(
-            const sensor_msgs::msg::Imu::ConstSharedPtr& msg
-        );
+            const sensor_msgs::msg::Imu::ConstSharedPtr &msg);
         void pointcloud_transform(
-            const sensor_msgs::msg::PointCloud2 & p_in, sensor_msgs::msg::PointCloud2 & p_out
-        );
+            const sensor_msgs::msg::PointCloud2 &p_in, sensor_msgs::msg::PointCloud2 &p_out);
         void listen_transfrom_callback();
-        Eigen::Matrix3d toEigenMatrix(const std::array<double, 9>& covariance);
-        std::array<double, 9> toCovarianceArray(const Eigen::Matrix3d& matrix);
+        Eigen::Matrix3d toEigenMatrix(const std::array<double, 9> &covariance);
+        std::array<double, 9> toCovarianceArray(const Eigen::Matrix3d &matrix);
     };
 }
 

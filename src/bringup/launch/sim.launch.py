@@ -15,7 +15,7 @@ def generate_launch_description():
         name='container',
         namespace='',
         package='rclcpp_components',
-        executable='component_container',
+        executable='component_container_mt',
         output='screen',
         parameters=[params_file, {'autostart': True}],
     )
@@ -50,7 +50,7 @@ def generate_launch_description():
             ComposableNode(
                 package='nav2_map_server',
                 plugin='nav2_map_server::MapServer',
-                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map','simulation','rmuc_2025.yaml')}],
+                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map','simulation','rmul_2025.yaml')}],
                 name='map_server',),
             ComposableNode(
                 package='nav2_lifecycle_manager',
@@ -126,12 +126,13 @@ def generate_launch_description():
         [
             container,
             lidar_transform,
-            #start_nav2_rviz,
-            #seg,
-            #load_map_server,
+            start_nav2_rviz,
+            seg,
+            load_map_server,
             #nav2,
-            #p_to_l,
+            p_to_l,
             #map_to_odom,
-            #pointlio
+            pointlio,
+            # amcl_node
         ]
     )

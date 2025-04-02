@@ -6,7 +6,7 @@
 #     alpha3: 0.2
 #     alpha4: 0.2
 #     alpha5: 0.2
-#     base_frame_id: "base_footprint"
+#     base_frame_id: "base_link"
 #     beam_skip_distance: 0.5
 #     beam_skip_error_threshold: 0.9
 #     beam_skip_threshold: 0.3
@@ -18,9 +18,9 @@
 #     laser_min_range: -1.0
 #     laser_model_type: "likelihood_field"
 #     max_beams: 60
-#     max_particles: 3000
-#     min_particles: 1000
-#     odom_frame_id: "camera_init"
+#     max_particles: 2000
+#     min_particles: 500
+#     odom_frame_id: "odom"
 #     pf_err: 0.05
 #     pf_z: 0.99
 #     recovery_alpha_fast: 0.0
@@ -38,8 +38,14 @@
 #     z_rand: 0.5
 #     z_short: 0.05
 #     scan_topic: scan
-#     map_topic: map
-#     set_initial_pose: false
+
+# amcl_map_client:
+#   ros__parameters:
+#     use_sim_time: False
+
+# amcl_rclcpp_node:
+#   ros__parameters:
+#     use_sim_time: False
 
 bt_navigator:
   ros__parameters:
