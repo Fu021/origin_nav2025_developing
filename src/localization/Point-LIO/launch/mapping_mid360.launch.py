@@ -64,7 +64,7 @@ def generate_launch_description():
             'use_imu_as_input': False,  # Change to True to use IMU as input of Point-LIO
             'prop_at_freq_of_imu': True,
             'check_satu': True,
-            'init_map_size': 10,
+            'init_map_size': 1000,
             'point_filter_num': point_filter_num,  # Options: 1, 3
             'space_down_sample': space_down_sample,
             'filter_size_surf': filter_size_surf,  # Options: 0.5, 0.3, 0.2, 0.15, 0.1
