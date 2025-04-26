@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/ros/humble/include/**",
+                "${workspaceFolder}/src/lidar/lidar_transform/include",
+                "${workspaceFolder}/src/localization/icp_registration/include",
+                "${workspaceFolder}/install/livox_ros_driver2/include/**",
+                "/usr/include/eigen3/**",
+                "/usr/include/pcl-1.12",
+                "${workspaceFolder}/src/serial/rm_serial_cpp/include",
+                "${workspaceFolder}/install/referee_msg/include/referee_msg"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
