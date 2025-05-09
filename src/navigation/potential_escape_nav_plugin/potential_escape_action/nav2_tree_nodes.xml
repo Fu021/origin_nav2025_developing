@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+  For instructions on using Groot and description of the following BehaviorTree nodes,
+  please refer to the groot_instructions.md and REAMDE.md respectively located in the
+  nav2_behavior_tree package.
+-->
+<root>
+  <TreeNodesModel>
+    <!-- ############################### ACTION NODES ################################# -->
+    <Action ID="Escape">
+      <input_port name="backup_dist">Distance to backup</input_port>
+      <input_port name="backup_speed">Speed at which to backup</input_port>
+      <input_port name="time_allowance">Allowed time for reversing</input_port>
+      <input_port name="server_name">Server name</input_port>
+      <input_port name="server_timeout">Server timeout</input_port>
+    </Action>
+
+  </TreeNodesModel>
+</root>

@@ -1,0 +1,7 @@
+<class_libraries>
+	<library path="nav2_escape_behavior">
+		<class name="nav2_behaviors/Escape" type="nav2_behaviors::Escape" base_class_type="nav2_core::Behavior">
+			<description>Escape behavior plugin</description>
+		  </class>  
+	  </library>
+</class_libraries>

@@ -87,7 +87,7 @@ class UnpackReferee(py_trees.behaviour.Behaviour):
     
     def update(self):
         self.blackboard.mid_occupy = (self.blackboard.Referee.event_type>>21)&3
-        print("mid_occupy: %d"%self.blackboard.mid_occupy)
+        #print("mid_occupy: %d"%self.blackboard.mid_occupy)
         return Status.SUCCESS
 
 class Patrol(py_trees.behaviour.Behaviour):

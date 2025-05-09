@@ -53,7 +53,7 @@ def find_usb_devices():
     return 0
              
 def send_all(yaw_aim,pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_speed_nav,pitch_mode,super_cap_mode):
-    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, 0.0,0.0, 1, super_cap_mode)
+    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,1.0, 1, super_cap_mode)
     message= build_all_message(data)
     ser.write(message)
 
@@ -85,20 +85,16 @@ class SPNode(Node):
         self.msg_fire = 0
         self.track = 0.0
         self.pitch_aim = 0.0
-        self.super_cap_mode = 0
+        self.super_cap_mode = 1
 
         self.clock = 1
         
     def dip_angle_callback(self, msg:Float32):
         degree = msg.data
-        if degree > 5.0 and degree < 8.0:
+        if degree < 5.0:
             self.super_cap_mode = 0
-            # self.super_cap_mode = 1
-        elif degree > 8.0:
-            self.super_cap_mode = 2
         else:
-            self.super_cap_mode = 0
-
+            self.super_cap_mode = 2
     def clock_callback(self):
         if self.clock == 1:
             self.clock = -1

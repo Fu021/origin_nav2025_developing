@@ -198,9 +198,9 @@ def generate_launch_description():
              p_to_l,
              fake_baselink,
              dp_a,
-            TimerAction(period=4.0, actions=[icp]),
+            # TimerAction(period=4.0, actions=[icp]),
             TimerAction(period=8.0, actions=[nav2]),
-            # TimerAction(period=10.0, actions=[dec]),
+            TimerAction(period=10.0, actions=[dec]),
 
             
         ]

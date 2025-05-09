@@ -39,5 +39,5 @@ def generate_launch_description():
     return LaunchDescription([
         base_link_to_livox_node,
         aft_mapped_to_base_link_node,
-        # map_to_odom_node,
+        map_to_odom_node,
     ])
