@@ -10,6 +10,7 @@
   <depend>rclpy</depend>
   <depend>referee_msg</depend>
   <depend>auto_aim_interfaces</depend>
+  <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+from glob import glob
+import os
 package_name = 'dec_tree'
 
 setup(
@@ -9,9 +11,12 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/config', ['config/rmul.yaml','config/new_test.yaml','config/A.yaml']),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'PyYAML',
+    ],
     zip_safe=True,
     maintainer='f021',
     maintainer_email='f021@todo.todo',
@@ -21,7 +26,8 @@ setup(
     entry_points={
         'console_scripts': [
             "root=dec_tree.root:main",
-            "referee_fake=dec_tree.referee_fake:main"
+            "root_simple=dec_tree.rootsimple:main",
+            "referee_fake=dec_tree.referee_fake:main",
         ],
     },
 )

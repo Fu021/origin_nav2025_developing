@@ -17,7 +17,7 @@ def create_get_data(node,qos_profile,nav):
 
     get_data_from_yaml = GetDataFromYaml(
         name="get_data_from_yaml",
-        yaml_name="rmuc",
+        yaml_name="rmuc_simple",
         node=node
     )
 
@@ -75,53 +75,6 @@ def create_dec(node,nav,qos_profile):
     pub_goal = PubGoal(
         name="pub_goal",
         nav=nav
-    )
-
-    def condition_outpost(patrol):
-        is_hp_full = (patrol.blackboard.Referee.remain_hp >= 400)
-        is_hp_low = (patrol.blackboard.Referee.remain_hp < patrol.yaml.blood_limit)
-        is_bullet_low = (patrol.blackboard.Referee.bullet_remaining_num_17mm < 75)
-        is_bullet_empty = (patrol.blackboard.Referee.bullet_remaining_num_17mm <= 0)
-        is_final_minute = (patrol.blackboard.Referee.stage_remain_time <=62)
-        patrol.got_bullet = ((patrol.blackboard.Referee.bullet_remaining_num_17mm - patrol.bullet_remain_last > 50) and patrol.blackboard.home_occupy != 0) #在家里这一刻拿到弹了
-        print(f"got_bullet_in_final_minute:{patrol.got_bullet_in_final_minute},{patrol.got_bullet}")
-        their_color = 'red'
-        if patrol.yaml.our_color == 'red':
-            their_color = 'blue'
-        if getattr(patrol.blackboard.Referee,their_color + '_outpost_hp') >= 0 and patrol.blackboard.Referee.stage_remain_time<=360:
-            return True
-        return False
-        
-
-    goto_outpost = Patrol(
-        name="goto_outpost",
-        points_name="outpost",
-        node=node,
-        nav=nav,
-        condition_func=condition_outpost
-    )
-
-    def condition_peek(patrol):
-        is_hp_full = (patrol.blackboard.Referee.remain_hp >= 400)
-        is_hp_low = (patrol.blackboard.Referee.remain_hp < patrol.yaml.blood_limit)
-        is_bullet_low = (patrol.blackboard.Referee.bullet_remaining_num_17mm < 75)
-        is_bullet_empty = (patrol.blackboard.Referee.bullet_remaining_num_17mm <= 0)
-        is_final_minute = (patrol.blackboard.Referee.stage_remain_time <=62)
-        patrol.got_bullet = ((patrol.blackboard.Referee.bullet_remaining_num_17mm - patrol.bullet_remain_last > 50) and patrol.blackboard.home_occupy != 0) #在家里这一刻拿到弹了
-        print(f"got_bullet_in_final_minute:{patrol.got_bullet_in_final_minute},{patrol.got_bullet}")
-        their_color = 'red'
-        if patrol.yaml.our_color == 'red':
-            their_color = 'blue'
-        if getattr(patrol.blackboard.Referee,their_color + '_outpost_hp') <= 0:
-            return True
-        return False
-
-    goto_peek = Patrol(
-        name='goto_peek',
-        points_name='peek',
-        node=node,
-        nav=nav,
-        condition_func=condition_peek
     )
 
     def condition_home(patrol):
@@ -185,26 +138,16 @@ def create_dec(node,nav,qos_profile):
     )
 
     def condition_mid(patrol):
-        is_hp_full = (patrol.blackboard.Referee.remain_hp >= 400)
-        is_hp_low = (patrol.blackboard.Referee.remain_hp < patrol.yaml.blood_limit)
-        is_bullet_low = (patrol.blackboard.Referee.bullet_remaining_num_17mm < 75)
-        is_bullet_empty = (patrol.blackboard.Referee.bullet_remaining_num_17mm <= 0)
-        is_final_minute = (patrol.blackboard.Referee.stage_remain_time <=62)
-        patrol.got_bullet = ((patrol.blackboard.Referee.bullet_remaining_num_17mm - patrol.bullet_remain_last > 50) and patrol.blackboard.home_occupy != 0) #在家里这一刻拿到弹了
-        print(f"got_bullet_in_final_minute:{patrol.got_bullet_in_final_minute},{patrol.got_bullet}")
-
-        their_color = 'red'
-        if patrol.yaml.our_color == 'red':
-            their_color = 'blue'
-        if patrol.blackboard.Referee.stage_remain_time>=360:
-            return True
+        return True
 
     goto_mid = Patrol(
         name="goto_mid",
         points_name="mid",
         node=node,
         nav=nav,
-        condition_func=condition_mid
+        condition_func=condition_mid,
+        random=False,
+        
     )
 
 
@@ -251,7 +194,7 @@ def create_dec(node,nav,qos_profile):
         [pitch_dec,send_pitch]
     )
     dec_selector.add_children(
-        [goto_home,goto_peek,goto_outpost,goto_mid]
+        [goto_home,goto_mid]
     )
 
     dec.add_children(

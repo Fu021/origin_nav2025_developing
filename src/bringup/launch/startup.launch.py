@@ -73,6 +73,12 @@ def generate_launch_description():
             namespace='',
             output="screen",
         )
+    dec_simple = Node(
+            package="dec_tree",
+            executable="root",
+            namespace='',
+            output="screen",
+        )
     seg = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             get_package_share_directory('linefit_ground_segmentation_ros')+"/launch/segmentation.launch.py"
@@ -86,9 +92,9 @@ def generate_launch_description():
                 package='nav2_map_server',
                 plugin='nav2_map_server::MapServer',
                 # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'map_newnew.yaml')}],
-                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', '6floor_mid.yaml')}],
+                # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', '6floor_mid.yaml')}],
                 # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'blank.yaml')}],
-                # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'rmuc_2025.yaml')}],
+                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'rmuc_2025_normalized.yaml')}],
                 name='map_server',),
             ComposableNode(
                 package='nav2_lifecycle_manager',
@@ -199,8 +205,10 @@ def generate_launch_description():
              fake_baselink,
              dp_a,
             # TimerAction(period=4.0, actions=[icp]),
-            TimerAction(period=8.0, actions=[nav2]),
-            TimerAction(period=10.0, actions=[dec]),
+            TimerAction(period=4.0, actions=[nav2]),
+            # TimerAction(period=8.0, actions=[dec]),
+            # TimerAction(period=8.0, actions=[dec_simple]),
+
 
             
         ]

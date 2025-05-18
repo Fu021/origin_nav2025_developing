@@ -83,11 +83,11 @@ class UnpackReferee(py_trees.behaviour.Behaviour):
         super().__init__(name)
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key('Referee',py_trees.common.Access.READ)
-        self.blackboard.register_key('mid_occupy',py_trees.common.Access.WRITE)
+        self.blackboard.register_key('home_occupy',py_trees.common.Access.WRITE)
     
     def update(self):
-        self.blackboard.mid_occupy = (self.blackboard.Referee.event_type>>21)&3
-        #print("mid_occupy: %d"%self.blackboard.mid_occupy)
+        self.blackboard.home_occupy = (self.blackboard.Referee.rfid_status>>19)&1
+        print("home_occupy: %d"%self.blackboard.home_occupy)
         return Status.SUCCESS
 
 class Patrol(py_trees.behaviour.Behaviour):
@@ -99,56 +99,122 @@ class Patrol(py_trees.behaviour.Behaviour):
         referee_condition额外附加裁判条件 为1后将条件通过字典传入\n
         interrupt为1可以打断running状态强制发送点位
     '''
-    def __init__(self, name: str, points_name, node:Node, nav: BasicNavigator, referee_condition=0):
+    def __init__(self, name: str, points_name, node:Node, nav: BasicNavigator, condition_func, random=True):
         super().__init__(name)
         self.yaml = self.attach_blackboard_client(namespace="yaml")
         self.yaml.register_key(points_name,py_trees.common.Access.READ)
         self.yaml.register_key('blood_limit',py_trees.common.Access.READ)
         # self.yaml.register_key("our_outpost",py_trees.common.Access.READ)
-        # self.yaml.register_key("our_color",py_trees.common.Access.READ)
+        self.yaml.register_key("our_color",py_trees.common.Access.READ)
         # self.yaml.register_key("their_outpost",py_trees.common.Access.READ)
 
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key("goal",py_trees.common.Access.WRITE)
         self.blackboard.register_key("dec_now",py_trees.common.Access.WRITE)
-        self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
         self.blackboard.register_key("running",py_trees.common.Access.READ)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
         self.blackboard.register_key("Referee",py_trees.common.Access.READ)
-        self.blackboard.register_key('mid_occupy',py_trees.common.Access.READ)
-
+        self.blackboard.register_key('home_occupy',py_trees.common.Access.READ)
         self.points = []
         self.name = name
         self.points_name = points_name
         self.lens = 0
         self.point_now = 0
-        self.referee_condition = referee_condition
+        self.condition_func = condition_func
         self.node = node
         self.blackboard.dec_now = None
-        self.wait_begin = False
         self.nav = nav
-        self.end_time = 0
-
+        self.bullet_remain_last=0
+        self.got_bullet = False
+        self.got_bullet_in_final_minute=False
+        self.is_in_12s_home_wait=False         #如果回家以后距离下一次弹丸发放不足10s,就触发12s等待，拿到弹丸后打破等待
+        self.home_wait_start_time = 0  # 记录进入12秒等待期的时间戳
+        self.waiting_for = None       # 等待的原因（如 'normal' 或 'home_phase_12s'）
+        self.wait_until = 0           # 等待截止时间
+        self.random =random
     def condition(self):
+        if self.condition_func(self):
+            return True
+        return False
         # if self.blackboard.Referee.game_progress != 4:
         #     return False
+        # is_hp_full = (self.blackboard.Referee.remain_hp >= 400)
+        # is_hp_low = (self.blackboard.Referee.remain_hp < self.yaml.blood_limit)
+        # is_bullet_low = (self.blackboard.Referee.bullet_remaining_num_17mm < 75)
+        # is_bullet_empty = (self.blackboard.Referee.bullet_remaining_num_17mm <= 0)
+        # is_final_minute = (self.blackboard.Referee.stage_remain_time <=62)
+        # self.got_bullet = ((self.blackboard.Referee.bullet_remaining_num_17mm - self.bullet_remain_last > 50) and self.blackboard.home_occupy != 0) #在家里这一刻拿到弹了
+        # print(f"got_bullet_in_final_minute:{self.got_bullet_in_final_minute},{self.got_bullet}")
+        # if self.referee_condition == 'home':  # True： 需要回家
+        #     '''
+        #     需要回家需要满足的条件：
+        #     case1： 比赛前六分钟没血或没弹就回家，直到血量满且子弹足
 
-        if self.referee_condition == 'home': 
-            # True： 需要回家
-            if self.blackboard.dec_now != 'goto_home' and self.blackboard.Referee.remain_hp < self.yaml.blood_limit:
-                return True
-            elif self.blackboard.dec_now == 'goto_home' and self.blackboard.Referee.remain_hp < 399:
-                return True
-            elif self.blackboard.mid_occupy == 2 and self.blackboard.Referee.bullet_remaining_num_17mm <= 0:
-                return True
-        elif self.referee_condition == 'peek':
-            # True： 需要去peek
-            if self.blackboard.mid_occupy == 2:
-                return True
-        elif self.referee_condition == 'mid':
-            return True #需要去mid
+        #     case2： 进入最后一分钟，没有在最后一分钟拿到弹，且血低或弹尽，直到血回满并且拿到弹再走
 
-        return False 
+        #     case3： 最后一分钟并且在最后一分钟拿到过弹后，仅血量不足回家,血回满再走
+
+        #     都需要进行的：判断当前在补给区，并且距离下一波发弹的时间小于10s,则等待12s
+
+
+        #     '''
+
+
+        #     if is_final_minute:
+        #         if self.got_bullet:
+        #             self.got_bullet_in_final_minute  = True
+                
+        #     # Case 1: 进入最后一分钟且未拿到过弹，且血低或弹尽，直到血回满并且拿到弹再走
+        #         if not self.got_bullet_in_final_minute :
+        #             # 若 血量低且弹量为空继续发点
+        #             if is_hp_low or is_bullet_empty :
+        #                 return True
+        #             # 若 血量没有回满且弹量low继续发点
+        #             elif ((not is_hp_full) or is_bullet_low) and self.blackboard.dec_now == 'goto_home': 
+        #                 return True
+        #     # Case 2: 最后一分钟并且拿到过弹后，仅血量不足回家,血回满再走
+        #         else :
+        #             if is_hp_low:
+        #                 return True
+        #             elif (not is_hp_full) and self.blackboard.dec_now == 'goto_home':
+        #                 return True
+                
+            
+        #     else: #比赛前六分钟
+
+        #         if is_hp_low or is_bullet_empty: #没血或者没弹
+        #             return True
+        #         elif self.waiting_for == "home_phase_12s":
+        #             return True
+        #         elif ((not is_hp_full) or is_bullet_low) and self.blackboard.dec_now == 'goto_home': #血量没回满或者子弹不足，继续在家呆着
+        #             return True
+            
+        # elif self.referee_condition == 'outpost':
+        #     their_color = 'red'
+        #     if self.yaml.our_color == 'red':
+        #         their_color = 'blue'
+        #     if getattr(self.blackboard.Referee,their_color + '_outpost_hp') >= 0 and self.blackboard.Referee.stage_remain_time<=360:
+        #         return True
+            
+        # elif self.referee_condition == 'peek':
+        #     # True： 需要去peek
+        #     their_color = 'red'
+        #     if self.yaml.our_color == 'red':
+        #         their_color = 'blue'
+        #     if getattr(self.blackboard.Referee,their_color + '_outpost_hp') <= 0:
+        #         return True
+            
+        
+        # elif self.referee_condition == 'mid':
+        #     #需要去mid
+        #     their_color = 'red'
+        #     if self.yaml.our_color == 'red':
+        #         their_color = 'blue'
+        #     if self.blackboard.Referee.stage_remain_time>=360:
+        #         return True
+            
+
+        # return False 
 
 
         # if self.referee_condition == 1:
@@ -166,13 +232,6 @@ class Patrol(py_trees.behaviour.Behaviour):
         #     if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') > self.yaml.our_outpost:
         #         return False
         # elif self.referee_condition == 2:
-        #     their_color = 'red'
-        #     if self.yaml.our_color == 'red':
-        #         their_color = 'blue'
-        #     if getattr(self.blackboard.Referee,their_color + '_outpost_hp') > self.yaml.their_outpost:
-        #         return False
-        #     if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') <= self.yaml.our_outpost:
-        #         return False
         
         # if self.points == []:
         #     self.points = self.yaml.__getattr__(self.points_name)
@@ -196,17 +255,23 @@ class Patrol(py_trees.behaviour.Behaviour):
     def go_to_next(self):
         if self.len == 1:
             return
-        tmp = random.choice(self.points)
-        while tmp == self.point_now:
+        if self.random:
             tmp = random.choice(self.points)
-        self.point_now = tmp
+            while tmp == self.point_now:
+                tmp = random.choice(self.points)
+            self.point_now = tmp
+        else :
+            self.point_now=self.points[(self.points.index(self.point_now)+1)%self.len]
 
     def update(self):
-        # 初始条件
-        if not self.condition():
-            # hp>150 且不需要去mid，不需要走此步
-            return Status.FAILURE
         
+        
+        # 初始条件
+        condition= self.condition()
+        self.bullet_remain_last=self.blackboard.Referee.bullet_remaining_num_17mm
+        if not condition:
+            return Status.FAILURE
+                   
         self.points = self.yaml.__getattr__(self.points_name)
         self.len = len(self.points)
         
@@ -221,35 +286,51 @@ class Patrol(py_trees.behaviour.Behaviour):
         if self.blackboard.running.data == True:
             self.node.get_logger().info("running")
             return Status.SUCCESS
-        
+        print(self.blackboard.Referee.stage_remain_time % 60)
         # 分成4种情况
         # 1. 到达点位，reach_goal为true，则开启wait_begin;
         # 2. 未到达，继续发点
         # 3. wait_begin已经开启，时间未达到，直接继续发送当前点位
         # 4. wait_begin已经开启，时间达到，进入go_to_next尝试发送下一点位
-        if self.wait_begin:
-            if time.time() > self.end_time:
-                self.wait_begin = False
+
+        # 特殊情况
+        # 当前在补给区，并且距离下一波发弹的时间小于10s,则等待12s
+
+        #开启等待后检查等待是否结束
+        if self.waiting_for is not None:        
+            if time.time() > self.wait_until:
+                if self.waiting_for == "home_phase_12s":
+                    self.is_in_12s_home_wait = False
+                self.waiting_for = None
                 self.go_to_next()
                 self.blackboard.goal = self.point_now
-                self.node.get_logger().info("%s: send goal x:%f y:%f"%(self.name,self.point_now['x'],self.point_now['y']))
+                self.node.get_logger().info("%s: send goal x:%f y:%f" % (self.name, self.point_now['x'], self.point_now['y']))
                 return Status.SUCCESS
             else:
-                self.node.get_logger().info("waitting")
+                self.node.get_logger().info("waiting for %s..." % self.waiting_for)
                 return Status.SUCCESS
         
-        if self.blackboard.reach_goal:
-            self.wait_begin = True
-            tmp = 0
-            if self.blackboard.Referee.bullet_remaining_num_17mm > 0:
-                tmp = random.uniform(3,4)
-                self.node.get_logger().info("have bullet!!!")
-            self.end_time = tmp + time.time()
-            self.node.get_logger().info("time: %f"%(tmp))
+        # 检查是否需要进入12秒强制等待阶段
+        elif self.blackboard.Referee.stage_remain_time % 60 <= 10 and \
+            self.blackboard.home_occupy != 0 and \
+            not self.is_in_12s_home_wait:
+
+            self.is_in_12s_home_wait = True
+            self.waiting_for = "home_phase_12s"
+            self.wait_until = time.time() + 12
+            return Status.SUCCESS
+        
+        # 正常到达目标后等待
+        elif self.blackboard.reach_goal:
+            self.waiting_for = "normal"
+            tmp = random.uniform(3, 4)
+            self.wait_until = time.time() + tmp
+    
+        # 默认情况：发送当前目标点
         else:
             self.blackboard.goal = self.point_now
-            self.node.get_logger().info("%s: send goal x:%f y:%f"%(self.name,self.point_now['x'],self.point_now['y']))
-        
+            self.node.get_logger().info("%s: send goal x:%f y:%f" % (self.name, self.point_now['x'], self.point_now['y']))
+
         return Status.SUCCESS
     
 class CheckNavState(py_trees.behaviour.Behaviour):
@@ -292,29 +373,6 @@ class CheckNavState(py_trees.behaviour.Behaviour):
 
         return Status.SUCCESS
     
-class RotDec(py_trees.behaviour.Behaviour):
-    def __init__(self, name: str):
-        super().__init__(name)
-        self.blackboard = self.attach_blackboard_client()
-        self.yaml = self.attach_blackboard_client(namespace="yaml")
-        self.yaml.register_key("our_color",py_trees.common.Access.READ)
-        self.blackboard.register_key("Referee",py_trees.common.Access.READ)
-        self.blackboard.register_key("rot",py_trees.common.Access.WRITE)
-
-
-        self.blackboard.rot = Int32()
-        self.blackboard.rot.data = 0
-
-    def update(self):
-        # if getattr(self.blackboard.Referee,self.yaml.our_color + '_outpost_hp') <= 0.1:
-        #     self.blackboard.rot.data = True
-        # else:
-        #     self.blackboard.rot.data = False
-        
-        self.blackboard.rot.data = 16000
-
-        return Status.SUCCESS
-    
 class YawDec(py_trees.behaviour.Behaviour):
     def __init__(self, name: str):
         super().__init__(name)
@@ -340,14 +398,15 @@ class PitchDec(py_trees.behaviour.Behaviour):
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
         self.blackboard.register_key("pitch",py_trees.common.Access.WRITE)
+        self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
 
         self.blackboard.pitch = Bool()
         self.blackboard.pitch.data = False
 
     def update(self):
-        if self.blackboard.dec_now == 'outpost':
-            self.blackboard.pitch.data = False
-        else:
+        if self.blackboard.dec_now == 'goto_outpost':
             self.blackboard.pitch.data = True
+        else:
+            self.blackboard.pitch.data = False
 
         return Status.SUCCESS

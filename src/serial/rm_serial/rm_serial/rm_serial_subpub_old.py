@@ -53,7 +53,7 @@ def find_usb_devices():
     return 0
              
 def send_all(yaw_aim,pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_speed_nav,pitch_mode,super_cap_mode):
-    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,1.0, 1, super_cap_mode)
+    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,1.0, pitch_mode, super_cap_mode)
     message= build_all_message(data)
     ser.write(message)
 
@@ -69,13 +69,14 @@ class SPNode(Node):
         self.publisher_timer = self.create_timer(0.0067,self.publish_message)
         #导航
         self.sub_nav = self.create_subscription(Twist, '/cmd_vel_chassis', self.nav_callback,rclpy.qos.qos_profile_sensor_data)
-        self.sub_rot = self.create_subscription(Int32,"/nav_rotate",self.rot_callback,10)
         self.sub_yaw = self.create_subscription(Float32,'nav_yaw',self.yaw_callback,10)
         self.sub_dip_angle = self.create_subscription(Float32,"/dip_angle",self.dip_angle_callback,10)
 
+        self.sub_pitch = self.create_subscription(Bool,'nav_pitch',self.pitch_callback,10)
+
         self.clock_timer = self.create_timer(6,self.clock_callback)
 
-        self.rotate = 0.0
+        self.rotate = 22000 #小陀螺逻辑由电控控制，导航只需要传一个定值
         self.pitch = 0
         self.vx = 0.0
         self.vy = 0.0
@@ -89,9 +90,15 @@ class SPNode(Node):
 
         self.clock = 1
         
+    def pitch_callback(self,msg:Bool):
+        if msg.data == True:
+            self.pitch = 1
+        else:
+            self.pitch = 0
+
     def dip_angle_callback(self, msg:Float32):
         degree = msg.data
-        if degree < 5.0:
+        if degree < 8.0:
             self.super_cap_mode = 0
         else:
             self.super_cap_mode = 2
@@ -109,9 +116,6 @@ class SPNode(Node):
         
     def target_callback(self,msg:Target):
         self.track = msg.tracking
-
-    def rot_callback(self,msg:Int32):
-        self.rotate = msg.data
 
     def nav_callback(self, msg:Twist):
          self.vx=msg.linear.x
@@ -143,7 +147,7 @@ class SPNode(Node):
         self.publish_gimbal.publish(gimbal_msg)
         # print(self.yaw_aim,self.pitch_aim)
 
-        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,22000,self.v_yaw,self.pitch,self.super_cap_mode)
+        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch,self.super_cap_mode)
 
 def receive_message(node:SPNode):
     global parsed_data
