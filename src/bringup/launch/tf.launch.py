@@ -30,7 +30,7 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='map_to_odom',
         arguments=[
-            '0.625', '-1.41', '0.0',  # translation
+            '0.88', '-0.816', '0.0',  # translation
             '0.0', '0.0', '0.0', '1.0',  # rotation
             'map', 'odom'
         ]

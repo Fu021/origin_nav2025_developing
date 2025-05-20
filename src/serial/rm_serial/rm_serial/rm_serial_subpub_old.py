@@ -62,8 +62,8 @@ class SPNode(Node):
     def __init__(self):
         super().__init__("subscriber_publisher_node")
         self.br = TransformBroadcaster(self)
-        self.subscription = self.create_subscription(Target, '/front/armor_solver/target', self.target_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
-        self.subscription = self.create_subscription(GimbalCmd, '/process_gimbal', self.all_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
+        self.subscription = self.create_subscription(Target, '/armor_solver/target', self.target_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
+        self.subscription = self.create_subscription(GimbalCmd, '/armor_solver/cmd_gimbal', self.all_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
         self.publish_gimbal = self.create_publisher(Gimbal,"gimbal_status",10)
         self.publish_referee:Publisher = self.create_publisher(Referee,"Referee",10)
         self.publisher_timer = self.create_timer(0.0067,self.publish_message)
@@ -169,6 +169,7 @@ def receive_message(node:SPNode):
                     gimbal_msg.yaw = result[0]
                     gimbal_msg.roll  = result[1]
                     gimbal_msg.pitch= result[2]
+                    gimbal_msg.mode= 1 #0 打红 1打蓝
                 if referee_data != None:
                     node.publish_referee.publish(referee_data)
                     # 发布消息

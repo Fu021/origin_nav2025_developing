@@ -75,7 +75,7 @@ def generate_launch_description():
         )
     dec_simple = Node(
             package="dec_tree",
-            executable="root",
+            executable="root_simple",
             namespace='',
             output="screen",
         )
@@ -206,7 +206,7 @@ def generate_launch_description():
              dp_a,
             # TimerAction(period=4.0, actions=[icp]),
             TimerAction(period=4.0, actions=[nav2]),
-            # TimerAction(period=8.0, actions=[dec]),
+            TimerAction(period=8.0, actions=[dec]),
             # TimerAction(period=8.0, actions=[dec_simple]),
 
 

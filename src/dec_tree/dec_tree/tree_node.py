@@ -104,6 +104,8 @@ class Patrol(py_trees.behaviour.Behaviour):
         self.yaml = self.attach_blackboard_client(namespace="yaml")
         self.yaml.register_key(points_name,py_trees.common.Access.READ)
         self.yaml.register_key('blood_limit',py_trees.common.Access.READ)
+        self.yaml.register_key('blood_limit',py_trees.common.Access.WRITE)
+
         # self.yaml.register_key("our_outpost",py_trees.common.Access.READ)
         self.yaml.register_key("our_color",py_trees.common.Access.READ)
         # self.yaml.register_key("their_outpost",py_trees.common.Access.READ)
@@ -281,6 +283,12 @@ class Patrol(py_trees.behaviour.Behaviour):
             self.init_dec()
             self.blackboard.goal = self.point_now
             self.node.get_logger().info("%s: send goal x:%f y:%f"%(self.name,self.point_now['x'],self.point_now['y']))
+            if self.blackboard.dec_now == 'goto_outpost' or self.blackboard.dec_now == 'goto_mid':
+                self.yaml.blood_limit = 200
+            else :
+                self.yaml.blood_limit = 150
+
+
             return Status.SUCCESS
         
         if self.blackboard.running.data == True:
