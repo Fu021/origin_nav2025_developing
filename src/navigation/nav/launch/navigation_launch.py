@@ -214,7 +214,7 @@ def generate_launch_description():
                 package='nav2_behaviors',
                 executable='behavior_server',
                 name='behavior_server',
-                output='screen',
+                output='both',
                 respawn=use_respawn,
                 respawn_delay=2.0,
                 parameters=[configured_params],

@@ -331,7 +331,7 @@ class Patrol(py_trees.behaviour.Behaviour):
         # 正常到达目标后等待
         elif self.blackboard.reach_goal:
             self.waiting_for = "normal"
-            tmp = random.uniform(3, 4)
+            tmp = 7.0
             self.wait_until = time.time() + tmp
     
         # 默认情况：发送当前目标点
@@ -407,14 +407,38 @@ class PitchDec(py_trees.behaviour.Behaviour):
         self.blackboard.register_key("dec_now",py_trees.common.Access.READ)
         self.blackboard.register_key("pitch",py_trees.common.Access.WRITE)
         self.blackboard.register_key("reach_goal",py_trees.common.Access.READ)
+        self.blackboard.register_key("outpost_attack",py_trees.common.Access.READ)
+        self.blackboard.register_key("Referee",py_trees.common.Access.READ)
+
 
         self.blackboard.pitch = Bool()
         self.blackboard.pitch.data = False
+        self.yaml = self.attach_blackboard_client(namespace="yaml")
+        self.yaml.register_key("our_color",py_trees.common.Access.READ)
+
 
     def update(self):
-        if self.blackboard.dec_now == 'goto_outpost':
+        their_color = 'red'
+        if self.yaml.our_color == 'red':
+            their_color = 'blue'
+        if self.blackboard.dec_now == 'goto_mid' and self.blackboard.reach_goal and getattr(self.blackboard.Referee,their_color + '_outpost_hp') > 0:
             self.blackboard.pitch.data = True
         else:
             self.blackboard.pitch.data = False
 
+        return Status.SUCCESS
+    
+class OutpostAttackDec(py_trees.behaviour.Behaviour):
+    def __init__(self, name: str):
+        super().__init__(name)
+
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key("outpost_attack",py_trees.common.Access.WRITE)
+        self.blackboard.register_key("Referee",py_trees.common.Access.READ)
+
+        self.blackboard.outpost_attack = Bool()
+    
+    def update(self):
+        # if self.blackboard.Refere <= 360:
+        self.blackboard.outpost_attack.data = True
         return Status.SUCCESS

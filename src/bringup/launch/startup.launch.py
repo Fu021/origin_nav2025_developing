@@ -71,13 +71,13 @@ def generate_launch_description():
             package="dec_tree",
             executable="root",
             namespace='',
-            output="screen",
+            output="both",
         )
-    dec_simple = Node(
+    dec_radical = Node(
             package="dec_tree",
-            executable="root_simple",
+            executable="root_radical",
             namespace='',
-            output="screen",
+            output="both",
         )
     seg = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -207,7 +207,7 @@ def generate_launch_description():
             # TimerAction(period=4.0, actions=[icp]),
             TimerAction(period=4.0, actions=[nav2]),
             TimerAction(period=8.0, actions=[dec]),
-            # TimerAction(period=8.0, actions=[dec_simple]),
+            # TimerAction(period=8.0, actions=[dec_radical]),
 
 
             

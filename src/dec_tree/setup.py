@@ -27,6 +27,7 @@ setup(
         'console_scripts': [
             "root=dec_tree.root:main",
             "root_simple=dec_tree.rootsimple:main",
+            "root_radical=dec_tree.rootradical:main",
             "referee_fake=dec_tree.referee_fake:main",
         ],
     },

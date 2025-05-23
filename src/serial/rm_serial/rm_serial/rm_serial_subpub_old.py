@@ -63,7 +63,7 @@ class SPNode(Node):
         super().__init__("subscriber_publisher_node")
         self.br = TransformBroadcaster(self)
         self.subscription = self.create_subscription(Target, '/armor_solver/target', self.target_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
-        self.subscription = self.create_subscription(GimbalCmd, '/armor_solver/cmd_gimbal', self.all_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
+        self.subscription = self.create_subscription(GimbalCmd, 'process_gimbal', self.all_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
         self.publish_gimbal = self.create_publisher(Gimbal,"gimbal_status",10)
         self.publish_referee:Publisher = self.create_publisher(Referee,"Referee",10)
         self.publisher_timer = self.create_timer(0.0067,self.publish_message)
