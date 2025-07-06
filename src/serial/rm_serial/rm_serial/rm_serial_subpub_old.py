@@ -2,6 +2,7 @@ import struct
 import serial
 import time
 import rclpy
+import rclpy.duration
 from rclpy.node import Node, Publisher
 from rm_interfaces.msg import Target,GimbalCmd,Gimbal
 import rclpy.publisher
@@ -21,7 +22,7 @@ gimbal_msg = Gimbal()
 ser=0
 # 定义结构体
 class All_Data_Rx:
-    def __init__(self, yaw_aim, pitch_aim,fire_or_not,track,vx, vy, rotate, yaw_speed_nav, pitch_mode_nav,super_cap_mode):
+    def __init__(self, yaw_aim, pitch_aim,fire_or_not,track,vx, vy, rotate, yaw_speed_nav, pitch_mode_nav,super_cap_mode,back):
         self.yaw_aim = yaw_aim
         self.pitch_aim= pitch_aim
         self.fire_or_not= fire_or_not
@@ -32,6 +33,7 @@ class All_Data_Rx:
         self.yaw_speed_nav = yaw_speed_nav
         self.pitch_mode_nav = pitch_mode_nav
         self.super_cap_mode = super_cap_mode
+        self.back = back
 
 # 连接串口
 def find_usb_devices():
@@ -52,8 +54,8 @@ def find_usb_devices():
     print("No device found")
     return 0
              
-def send_all(yaw_aim,pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_speed_nav,pitch_mode,super_cap_mode):
-    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,1.0, pitch_mode, super_cap_mode)
+def send_all(yaw_aim,pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_speed_nav,pitch_mode,super_cap_mode,back):
+    data= All_Data_Rx(yaw_aim, pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,1.0, pitch_mode, super_cap_mode,back)
     message= build_all_message(data)
     ser.write(message)
 
@@ -61,10 +63,13 @@ def send_all(yaw_aim,pitch_aim,fire_or_not,track,x_speed, y_speed, rotate,yaw_sp
 class SPNode(Node):
     def __init__(self):
         super().__init__("subscriber_publisher_node")
+        self.declare_parameter('offset',0.007)
         self.br = TransformBroadcaster(self)
         self.subscription = self.create_subscription(Target, '/armor_solver/target', self.target_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
         self.subscription = self.create_subscription(GimbalCmd, 'process_gimbal', self.all_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # CHANGE
+        self.publish_gimbal = self.create_subscription(Bool,"back",self.back_callback, qos_profile=rclpy.qos.qos_profile_sensor_data)  # BACK
         self.publish_gimbal = self.create_publisher(Gimbal,"gimbal_status",10)
+
         self.publish_referee:Publisher = self.create_publisher(Referee,"Referee",10)
         self.publisher_timer = self.create_timer(0.0067,self.publish_message)
         #导航
@@ -73,7 +78,7 @@ class SPNode(Node):
         self.sub_dip_angle = self.create_subscription(Float32,"/dip_angle",self.dip_angle_callback,10)
 
         self.sub_pitch = self.create_subscription(Bool,'nav_pitch',self.pitch_callback,10)
-
+        self.back = False
         self.clock_timer = self.create_timer(6,self.clock_callback)
 
         self.rotate = 22000 #小陀螺逻辑由电控控制，导航只需要传一个定值
@@ -126,10 +131,16 @@ class SPNode(Node):
         self.yaw_aim=msg.yaw
         self.pitch_aim=msg.pitch
 
+    def back_callback(self,msg):
+        self.back=msg.data
+
     def publish_message(self):
+        current_time=self.get_clock().now()
+        offset=self.get_parameter('offset').get_parameter_value().double_value
+        adjust_time=current_time+rclpy.duration.Duration(seconds=offset)
         t = TransformStamped()
 
-        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.stamp = adjust_time.to_msg()
         t.header.frame_id = 'odom'
         t.child_frame_id = 'gimbal_link'
 
@@ -143,11 +154,13 @@ class SPNode(Node):
         t.transform.rotation.z = q[2]
         t.transform.rotation.w = q[3]
         self.br.sendTransform(t)
+
+        # self.get_logger().info(str(gimbal_msg))
         # print(t.transform.rotation)
         self.publish_gimbal.publish(gimbal_msg)
         # print(self.yaw_aim,self.pitch_aim)
 
-        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch,self.super_cap_mode)
+        send_all(self.yaw_aim,self.pitch_aim,self.msg_fire,self.track,self.vx,self.vy,self.rotate,self.v_yaw,self.pitch,self.super_cap_mode,self.back)
 
 def receive_message(node:SPNode):
     global parsed_data
@@ -169,11 +182,13 @@ def receive_message(node:SPNode):
                     gimbal_msg.yaw = result[0]
                     gimbal_msg.roll  = result[1]
                     gimbal_msg.pitch= result[2]
-                    gimbal_msg.mode= 1 #0 打红 1打蓝
+                    gimbal_msg.mode= 0 #0 打红 1打蓝
+                     # print(gimbal_msg,time.time())
                 if referee_data != None:
                     node.publish_referee.publish(referee_data)
+                    # print(referee_data,time.time())
                     # 发布消息
-                #print(gimbal_msg.yaw,gimbal_msg.roll,gimbal_msg.pitch)
+                # print(gimbal_msg.yaw,gimbal_msg.roll,gimbal_msg.pitch)
                 
             except Exception as e:
                 print("Error:",str(e))

@@ -27,7 +27,7 @@ CMD_ID_AUTOAIM_DATA_RX= 0x81
 rOTATE = 1
 # 打包结构体为字节流
 def pack_all(data):
-    return struct.pack('<ff??fffffB', data.yaw_aim, data.pitch_aim,data.fire_or_not,data.track,data.vx, data.vy, data.rotate, data.yaw_speed_nav, data.pitch_mode_nav,data.super_cap_mode)
+    return struct.pack('<ff??fffffB?', data.yaw_aim, data.pitch_aim,data.fire_or_not,data.track,data.vx, data.vy, data.rotate, data.yaw_speed_nav, data.pitch_mode_nav,data.super_cap_mode,data.back)
 
 # 计算CRC校验位
 def crc8(data):
@@ -175,6 +175,12 @@ def parse_message(message):
                 bytes.fromhex(''.join(message[50]))          #受伤原因 uint8
                                 )[0]
             )
+        
+        referee_result.append(
+            struct.unpack('<B',
+                bytes.fromhex(''.join(message[51]))          #敌方英雄位置 uint8
+                                )[0]
+            )
         referee_data = Referee()
         referee_data.remain_hp = referee_result[0]
         referee_data.max_hp = referee_result[1]
@@ -199,6 +205,8 @@ def parse_message(message):
         referee_data.rfid_status = referee_result[20]
         referee_data.event_type = referee_result[21]
         referee_data.hurt_type = referee_result[22]
+        referee_data.enemy_hero_pos = referee_result[23]
+
 
         #print(referee_data)
     result = None

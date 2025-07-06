@@ -224,8 +224,8 @@ controller_server:
         use_rotate_to_heading_treshold: 0.1
         min_approach_linear_velocity: 0.0
         approach_velocity_scaling_dist: 1.5
-        v_linear_min: -4.5
-        v_linear_max: 4.5
+        v_linear_min: -6.5
+        v_linear_max: 6.5
         v_angular_min: -10.0
         v_angular_max: 10.0
         curvature_min: 0.4

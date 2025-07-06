@@ -8,7 +8,7 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='base_link_to_livox',
         arguments=[
-            '0.0', '0.0', '-0.6',  # translation
+            '0.0', '0.0', '-0.64',  # translation
             '0.0', '0.0', '0.521', '0.854',  # rotation
             'aft_mapped', 'base_link'
         ]
@@ -39,5 +39,5 @@ def generate_launch_description():
     return LaunchDescription([
         base_link_to_livox_node,
         aft_mapped_to_base_link_node,
-        map_to_odom_node,
+        # map_to_odom_node,
     ])
