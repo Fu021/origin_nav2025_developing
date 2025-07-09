@@ -3,7 +3,7 @@
     use_sim_time: false 
     rough_leaf_size: 0.4
     refine_leaf_size: 0.1
-    pcd_path: "src/localization/Point-LIO-grid_map_ros2/PCD/6floor_mid.pcd"
+    pcd_path: "src/localization/Point-LIO-grid_map_ros2/PCD/map_newnew.pcd"
     map_frame_id: "map"
     odom_frame_id: "odom"
     laser_frame_id: "aft_mapped"

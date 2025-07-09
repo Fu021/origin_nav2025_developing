@@ -46,6 +46,7 @@ def build_all_message(data):
 
 def parse_message(message):
     # 检查帧头4
+    # print(message)   
     if message[0] != 'aa':
         raise ValueError("Invalid header")
     # 解析帧长度
