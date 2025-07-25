@@ -73,6 +73,13 @@ def generate_launch_description():
             namespace='',
             output="both",
         )
+    
+    check_inv = Node(
+            package="check_invincible",
+            executable="check_invincible",
+            namespace='',
+            output="both",
+        )
     dec_radical = Node(
             package="dec_tree",
             executable="root_radical",
@@ -98,10 +105,10 @@ def generate_launch_description():
             ComposableNode(
                 package='nav2_map_server',
                 plugin='nav2_map_server::MapServer',
-                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'map_newnew.yaml')}],
+                # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'map_newnew.yaml')}],
                 # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', '6floor_mid.yaml')}],
                 # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'blank.yaml')}],
-                # parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'rmuc_2025_normalized.yaml')}],
+                parameters=[{'yaml_filename': os.path.join(bringup_dir, 'map', 'rmuc_2025_normalized.yaml')}],
                 name='map_server',),
             ComposableNode(
                 package='nav2_lifecycle_manager',
@@ -218,12 +225,12 @@ def generate_launch_description():
              load_map_server,
              p_to_l,
              fake_baselink,
-             dp_a,
+             dp_a, 
             # TimerAction(period=4.0, actions=[icp]),
             TimerAction(period=4.0, actions=[nav2]),
             # TimerAction(period=8.0, actions=[dec]),
-            # TimerAction(period=8.0, actions=[dec_radical]),
             # TimerAction(period=8.0, actions=[dec_simple]),
+            TimerAction(period=10.0, actions=[check_inv]),
 
 
             

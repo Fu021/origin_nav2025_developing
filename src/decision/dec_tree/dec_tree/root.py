@@ -4,8 +4,10 @@ import py_trees_ros
 import py_trees
 from nav2_simple_commander.robot_navigator import BasicNavigator
 from rclpy.qos import QoSProfile
-from .tree_node import GetDataFromYaml,PubGoal,CheckNavState,Patrol,YawDec,PitchDec,UnpackReferee
+from .tree_node import GetDataFromYaml,PubGoal,CheckNavState,Patrol,YawDec,PitchDec,UnpackReferee,OutpostAttackDec,ReachEnemyHeroPos
 from referee_msg.msg import Referee
+from rm_interfaces.msg import Target
+
 from std_msgs.msg import Bool, Int32, Float32
 from geometry_msgs.msg import Twist
 
@@ -17,7 +19,7 @@ def create_get_data(node,qos_profile,nav):
 
     get_data_from_yaml = GetDataFromYaml(
         name="get_data_from_yaml",
-        yaml_name="rmuc_simple",
+        yaml_name="rmuc",
         node=node
     )
 
@@ -40,7 +42,9 @@ def create_get_data(node,qos_profile,nav):
         qos_profile=qos_profile
     )
     save_Referee.setup(node=node)
+
     unpack_referee = UnpackReferee(name='unpack_referee')
+
     referee_list.add_children(
         [save_Referee,unpack_referee]
     )
@@ -76,6 +80,53 @@ def create_dec(node,nav,qos_profile):
         name="pub_goal",
         nav=nav
     )
+
+    # def condition_outpost(patrol):
+    #     is_hp_full = (patrol.blackboard.Referee.remain_hp >= 400)
+    #     is_hp_low = (patrol.blackboard.Referee.remain_hp < patrol.yaml.blood_limit)
+    #     is_bullet_low = (patrol.blackboard.Referee.bullet_remaining_num_17mm < 75)
+    #     is_bullet_empty = (patrol.blackboard.Referee.bullet_remaining_num_17mm <= 0)
+    #     is_final_minute = (patrol.blackboard.Referee.stage_remain_time <=62)
+    #     patrol.got_bullet = ((patrol.blackboard.Referee.bullet_remaining_num_17mm - patrol.bullet_remain_last > 50) and patrol.blackboard.home_occupy != 0) #在家里这一刻拿到弹了
+    #     print(f"got_bullet_in_final_minute:{patrol.got_bullet_in_final_minute},{patrol.got_bullet}")
+    #     their_color = 'red'
+    #     if patrol.yaml.our_color == 'red':
+    #         their_color = 'blue'
+    #     if getattr(patrol.blackboard.Referee,their_color + '_outpost_hp') >= 0 and patrol.blackboard.Referee.stage_remain_time<=360:
+    #         return True
+    #     return False
+        
+
+    # goto_outpost = Patrol(
+    #     name="goto_outpost",
+    #     points_name="outpost",
+    #     node=node,
+    #     nav=nav,
+    #     condition_func=condition_outpost
+    # )
+
+    # def condition_peek(patrol):
+    #     is_hp_full = (patrol.blackboard.Referee.remain_hp >= 400)
+    #     is_hp_low = (patrol.blackboard.Referee.remain_hp < patrol.yaml.blood_limit)
+    #     is_bullet_low = (patrol.blackboard.Referee.bullet_remaining_num_17mm < 75)
+    #     is_bullet_empty = (patrol.blackboard.Referee.bullet_remaining_num_17mm <= 0)
+    #     is_final_minute = (patrol.blackboard.Referee.stage_remain_time <=62)
+    #     patrol.got_bullet = ((patrol.blackboard.Referee.bullet_remaining_num_17mm - patrol.bullet_remain_last > 50) and patrol.blackboard.home_occupy != 0) #在家里这一刻拿到弹了
+    #     print(f"got_bullet_in_final_minute:{patrol.got_bullet_in_final_minute},{patrol.got_bullet}")
+    #     their_color = 'red'
+    #     if patrol.yaml.our_color == 'red':
+    #         their_color = 'blue'
+    #     if getattr(patrol.blackboard.Referee,their_color + '_outpost_hp') <= 0:
+    #         return True
+    #     return False
+
+    # goto_peek = Patrol(
+    #     name='goto_peek',
+    #     points_name='peek',
+    #     node=node,
+    #     nav=nav,
+    #     condition_func=condition_peek
+    # )
 
     def condition_home(patrol):
         is_hp_full = (patrol.blackboard.Referee.remain_hp >= 400)
@@ -145,12 +196,52 @@ def create_dec(node,nav,qos_profile):
         points_name="mid",
         node=node,
         nav=nav,
-        condition_func=condition_mid,
-        random=False,
-        
+        condition_func=condition_mid
     )
 
+    def condition_last_stand(patrol):
+        our_color = patrol.yaml.our_color
+        if getattr(patrol.blackboard.Referee,our_color + '_base_hp') <= 2000:
+            return True            
+        return False
 
+    goto_last_stand = Patrol(
+        name="goto_last",
+        points_name="the_last_stand",
+        node=node,
+        nav=nav,
+        condition_func=condition_last_stand,
+    )
+
+    def condition_catch_hero(patrol):
+       if patrol.blackboard.Referee.enemy_hero_pos > 0 :
+           return True
+       return False
+    
+    goto_catch_hero= Patrol(
+        name="goto_catch_hero",
+        points_name="enemy_hero",
+        node=node,
+        nav=nav,
+        condition_func=condition_catch_hero,
+        random=2
+    )
+    
+    def condition_go_to_outpost(patrol):
+        if patrol.yaml.our_color == 'red':
+            patrol.their_color = 'blue'
+        go_to_outpost = patrol.blackboard.Referee.stage_remain_time < 360 and getattr(patrol.blackboard.Referee,patrol.their_color + '_outpost_hp') > 0
+        if  go_to_outpost :
+            return True
+        return False
+
+    goto_outpost= Patrol(
+        name="goto_outpost",
+        points_name="outpost",
+        node=node,
+        nav=nav,
+        condition_func=condition_go_to_outpost
+    )
     # yaw = py_trees.composites.Sequence(
     #     name = 'yaw',
     #     memory=False
@@ -193,12 +284,56 @@ def create_dec(node,nav,qos_profile):
     pitch.add_children(
         [pitch_dec,send_pitch]
     )
+
+    enemy_hero = py_trees.composites.Sequence(
+        name = 'enemy_hero',
+        memory=False
+    )
+    reach_enemy_hero_dec = ReachEnemyHeroPos(
+        name='reach_enemy_hero_dec'
+    )
+
+    send_reach_hero = py_trees_ros.publishers.FromBlackboard(
+        name="send_reach_hero",
+        topic_name="reach_hero",
+        topic_type=Bool,
+        qos_profile=qos_profile,
+        blackboard_variable="reach_enemy_hero_pos"
+    )
+    send_reach_hero.setup(node=node)
+
+    enemy_hero.add_children(
+        [reach_enemy_hero_dec,send_reach_hero]
+    )
+
+    outpost_attack_list = py_trees.composites.Sequence(
+        name="outpost_attack_list",
+        memory=False
+    )
+
+    outpost_attack_dec = OutpostAttackDec(
+        name="outpost_attack_dec"
+    )
+
+    send_outpost_attack = py_trees_ros.publishers.FromBlackboard(
+        name="send_outpost_attack",
+        topic_name="outpost_attack",
+        topic_type=Bool,
+        qos_profile=qos_profile,
+        blackboard_variable="outpost_attack"
+    )
+    send_outpost_attack.setup(node=node)
+
+    outpost_attack_list.add_children(
+        [outpost_attack_dec,send_outpost_attack]
+    )
+
     dec_selector.add_children(
-        [goto_home,goto_mid]
+        [goto_home,goto_outpost,goto_last_stand,goto_catch_hero,goto_mid]
     )
 
     dec.add_children(
-        [dec_selector,pitch,pub_goal]
+        [dec_selector,pitch,enemy_hero,outpost_attack_list,pub_goal]
     )
 
     return dec

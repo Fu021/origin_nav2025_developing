@@ -1,4 +1,5 @@
 import struct
+import time
 from referee_msg.msg import Referee
 
 # CRC-8 校验表
@@ -27,7 +28,7 @@ CMD_ID_AUTOAIM_DATA_RX= 0x81
 rOTATE = 1
 # 打包结构体为字节流
 def pack_all(data):
-    return struct.pack('<ff??fffffB?', data.yaw_aim, data.pitch_aim,data.fire_or_not,data.track,data.vx, data.vy, data.rotate, data.yaw_speed_nav, data.pitch_mode_nav,data.super_cap_mode,data.back)
+    return struct.pack('<ff??fffffB?B', data.yaw_aim, data.pitch_aim,data.fire_or_not,data.track,data.vx, data.vy, data.rotate, data.yaw_speed_nav, data.pitch_mode_nav,data.super_cap_mode,data.back,data.reach_goal)
 
 # 计算CRC校验位
 def crc8(data):
@@ -46,7 +47,6 @@ def build_all_message(data):
 
 def parse_message(message):
     # 检查帧头4
-    # print(message)   
     if message[0] != 'aa':
         raise ValueError("Invalid header")
     # 解析帧长度
@@ -61,7 +61,7 @@ def parse_message(message):
     cmd_id = message[2]
     referee_result = []
     referee_data = None
-    if cmd_id == '18':
+    if cmd_id == '18':        
         referee_result.append(
             struct.unpack('<H',bytes.fromhex(''.join(message[3:5])))[0])#剩余血量 uint16
         referee_result.append(

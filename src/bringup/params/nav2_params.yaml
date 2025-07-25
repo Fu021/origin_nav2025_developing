@@ -351,7 +351,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 15.0  # 系数越小,从机器人半径减小的斜率越小,外围代价越大
-        inflation_radius: 0.5  #0.55
+        inflation_radius: 0.4  #0.55
       always_send_full_costmap: True
 
 map_server:
