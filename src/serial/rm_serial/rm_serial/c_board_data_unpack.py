@@ -182,6 +182,12 @@ def parse_message(message):
                 bytes.fromhex(''.join(message[51]))          #敌方英雄位置 uint8
                                 )[0]
             )
+
+        referee_result.append(
+            struct.unpack('<B',
+                bytes.fromhex(''.join(message[52]))          #是否需要回到堡垒 bool
+                                )[0]
+            )
         referee_data = Referee()
         referee_data.remain_hp = referee_result[0]
         referee_data.max_hp = referee_result[1]
@@ -207,6 +213,8 @@ def parse_message(message):
         referee_data.event_type = referee_result[21]
         referee_data.hurt_type = referee_result[22]
         referee_data.enemy_hero_pos = referee_result[23]
+        referee_data.return_fortress = referee_result[24]
+
 
 
         #print(referee_data)

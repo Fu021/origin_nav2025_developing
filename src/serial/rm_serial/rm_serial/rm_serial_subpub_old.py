@@ -197,7 +197,7 @@ def receive_message(node:SPNode):
                     gimbal_msg.yaw = result[0]
                     gimbal_msg.roll  = result[1]
                     gimbal_msg.pitch= result[2]
-                    gimbal_msg.mode= 1 #0 打红 1打蓝
+                    gimbal_msg.mode= 0 #0 打红 1打蓝
                      # print(gimbal_msg,time.time())
                 if referee_data != None:
                     node.publish_referee.publish(referee_data)

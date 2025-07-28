@@ -164,6 +164,9 @@ class Patrol(py_trees.behaviour.Behaviour):
         elif self.random == 2: # 取点巡逻
             return
     def update(self):
+        if (self.blackboard.Referee.game_progress == 4 and not self.is_game_start ) or self.blackboard.Referee.stage_remain_time == 415 or self.blackboard.Referee.stage_remain_time == 410:
+            self.is_game_start = True
+            self.nav.clearGlobalCostmap()
         # 初始条件
         condition= self.condition()
         self.bullet_remain_last=self.blackboard.Referee.bullet_remaining_num_17mm

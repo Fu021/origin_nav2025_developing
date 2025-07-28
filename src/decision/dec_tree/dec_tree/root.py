@@ -213,6 +213,19 @@ def create_dec(node,nav,qos_profile):
         condition_func=condition_last_stand,
     )
 
+    def condition_return_fortress(patrol):
+        if patrol.blackboard.Referee.return_fortress > 0 :
+            return True            
+        return False
+
+    goto_return_fortress = Patrol(
+        name="goto_fortress",
+        points_name="return_fortress",
+        node=node,
+        nav=nav,
+        condition_func=condition_return_fortress,
+    )
+
     def condition_catch_hero(patrol):
        if patrol.blackboard.Referee.enemy_hero_pos > 0 :
            return True
@@ -329,7 +342,7 @@ def create_dec(node,nav,qos_profile):
     )
 
     dec_selector.add_children(
-        [goto_home,goto_outpost,goto_last_stand,goto_catch_hero,goto_mid]
+        [goto_home,goto_return_fortress,goto_outpost,goto_last_stand,goto_catch_hero,goto_mid]
     )
 
     dec.add_children(

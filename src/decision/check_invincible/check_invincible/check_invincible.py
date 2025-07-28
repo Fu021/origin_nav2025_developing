@@ -21,7 +21,7 @@ class Invicible(Node):
         self.pub_inv=self.create_publisher(Bool,"skip_aim",10)
         self.time_period= 0.05
         self.tiemr=self.create_timer(self.time_period,self.time_callback)
-        self.our_color = "red"
+        self.our_color = "blue"
         self.their_color = "red" if self.our_color == "blue" else "blue"
         self.skip_aim = False
         self.Referee_data = Referee()

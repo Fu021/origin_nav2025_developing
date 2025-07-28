@@ -22,3 +22,4 @@ uint32 rfid_status
 uint32 event_type
 uint8 hurt_type
 uint8 enemy_hero_pos
+uint8 return_fortress
