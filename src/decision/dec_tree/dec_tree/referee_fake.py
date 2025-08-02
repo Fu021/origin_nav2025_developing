@@ -58,6 +58,8 @@ class RefereePub(Node):
         self.red_outpost_hp = 1500
         self.blue_outpost_hp = 1500
         self.min_time = 9
+        self.blue_base_hp = 5000
+
         self.max_time = 419
         self.stage_remain_time = 419
         self.stop = threading.Event()
@@ -103,6 +105,7 @@ class RefereePub(Node):
             msg.stage_remain_time = self.stage_remain_time
             msg.red_outpost_hp = self.red_outpost_hp
             msg.blue_outpost_hp = self.blue_outpost_hp
+            msg.blue_base_hp = self.blue_base_hp
             self.publisher.publish(msg)
             time.sleep(0.1)
         

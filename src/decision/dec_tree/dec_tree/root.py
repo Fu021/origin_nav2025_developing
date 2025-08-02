@@ -243,7 +243,7 @@ def create_dec(node,nav,qos_profile):
     def condition_go_to_outpost(patrol):
         if patrol.yaml.our_color == 'red':
             patrol.their_color = 'blue'
-        go_to_outpost = patrol.blackboard.Referee.stage_remain_time < 360 and getattr(patrol.blackboard.Referee,patrol.their_color + '_outpost_hp') > 0
+        go_to_outpost = patrol.blackboard.Referee.stage_remain_time < 420 and getattr(patrol.blackboard.Referee,patrol.their_color + '_outpost_hp') > 0
         if  go_to_outpost :
             return True
         return False
